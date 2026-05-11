@@ -1,0 +1,43 @@
+{
+  "id": 76,
+  "world": 6,
+  "boardSize": [
+    9,
+    9
+  ],
+  "moves": 20,
+  "goals": [
+    {
+      "type": "score",
+      "target": 46000
+    },
+    {
+      "type": "collectIngredients",
+      "target": 2
+    }
+  ],
+  "starThresholds": [
+    46000,
+    69000,
+    115000
+  ],
+  "layout": [
+    "XGGGGGGGX",
+    "GGGGGGGGG",
+    "GGGGGGGGG",
+    "GGGGGGGGG",
+    "GGGGGGGGG",
+    "GGGGGGGGG",
+    "GGGGGGGGG",
+    "GGGGGGGGG",
+    "XGGGGGGGX"
+  ],
+  "allowedColors": [
+    "red",
+    "blue",
+    "green",
+    "yellow",
+    "purple",
+    "orange"
+  ]
+}

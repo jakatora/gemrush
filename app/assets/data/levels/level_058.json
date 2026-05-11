@@ -1,0 +1,43 @@
+{
+  "id": 58,
+  "world": 4,
+  "boardSize": [
+    9,
+    9
+  ],
+  "moves": 19,
+  "goals": [
+    {
+      "type": "score",
+      "target": 28000
+    },
+    {
+      "type": "clearJelly",
+      "target": 29
+    }
+  ],
+  "starThresholds": [
+    28000,
+    42000,
+    70000
+  ],
+  "layout": [
+    "KGKKGGKGK",
+    "KGGGGKGGK",
+    "GGKKGKGGG",
+    "GGGGGKGGG",
+    "GKGGGKGGG",
+    "KKGKGGGKG",
+    "KKGGGKGGG",
+    "KGKGGKGGG",
+    "KKGGGGKKK"
+  ],
+  "allowedColors": [
+    "red",
+    "blue",
+    "green",
+    "yellow",
+    "purple",
+    "orange"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "id": 13,
+  "world": 1,
+  "boardSize": [
+    8,
+    8
+  ],
+  "moves": 25,
+  "goals": [
+    {
+      "type": "score",
+      "target": 9000
+    }
+  ],
+  "starThresholds": [
+    9000,
+    13500,
+    22500
+  ],
+  "layout": [
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG"
+  ],
+  "allowedColors": [
+    "red",
+    "blue",
+    "green",
+    "yellow",
+    "purple"
+  ]
+}

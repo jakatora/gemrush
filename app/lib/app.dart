@@ -1,0 +1,46 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import 'core/constants/routes.dart';
+import 'core/theme/app_theme.dart';
+import 'features/game/game_screen.dart';
+import 'features/map/map_screen.dart';
+import 'features/menu/menu_screen.dart';
+import 'features/settings/settings_screen.dart';
+import 'features/shop/shop_screen.dart';
+import 'features/splash/splash_screen.dart';
+
+class GemRushApp extends StatelessWidget {
+  const GemRushApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final router = GoRouter(
+      initialLocation: Routes.splash,
+      routes: [
+        GoRoute(path: Routes.splash, builder: (_, __) => const SplashScreen()),
+        GoRoute(path: Routes.menu, builder: (_, __) => const MenuScreen()),
+        GoRoute(path: Routes.map, builder: (_, __) => const MapScreen()),
+        GoRoute(
+          path: '${Routes.game}/:id',
+          builder: (_, state) {
+            final id = int.tryParse(state.pathParameters['id'] ?? '1') ?? 1;
+            return GameScreen(levelId: id);
+          },
+        ),
+        GoRoute(path: Routes.shop, builder: (_, __) => const ShopScreen()),
+        GoRoute(
+          path: Routes.settings,
+          builder: (_, __) => const SettingsScreen(),
+        ),
+      ],
+    );
+
+    return MaterialApp.router(
+      title: 'GemRush',
+      theme: AppTheme.buildDark(),
+      debugShowCheckedModeBanner: false,
+      routerConfig: router,
+    );
+  }
+}
