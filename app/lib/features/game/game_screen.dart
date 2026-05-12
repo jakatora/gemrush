@@ -81,11 +81,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
     setState(() => _level = data);
 
-    // Tutorial — pokaż tylko gdy poziom 1 i jeszcze nie ukończony.
-    final progress = ref.read(progressRepoProvider);
-    if (widget.levelId == 1 && (progress.getLevel(1)?.stars ?? 0) == 0) {
-      _showTutorial = true;
-    }
+    // Tutorial wyłączony domyślnie — pokażemy później po opcji "Pomoc".
+    // (kiedyś: auto na lvl 1, ale przykrywało gameplay i myliło graczy)
 
     if (!_preGameShown && mounted) {
       _preGameShown = true;
@@ -361,30 +358,36 @@ class _GameScreenState extends ConsumerState<GameScreen>
       );
     }
     return Scaffold(
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              GameHud(
-                levelId: widget.levelId,
-                score: _snapshot.score,
-                movesLeft: _snapshot.movesLeft,
-                goals: _game!.goals,
-                onPause: _pauseMenu,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Column(
+                children: [
+                  GameHud(
+                    levelId: widget.levelId,
+                    score: _snapshot.score,
+                    movesLeft: _snapshot.movesLeft,
+                    goals: _game!.goals,
+                    onPause: _pauseMenu,
+                  ),
+                  Expanded(child: GameWidget(game: _game!)),
+                  BoosterBar(
+                    busy: _game?.busy ?? false,
+                    onHintTap: _onHintTap,
+                    onShuffleTap: _onShuffleTap,
+                  ),
+                ],
               ),
-              Expanded(child: GameWidget(game: _game!)),
-              BoosterBar(
-                busy: _game?.busy ?? false,
-                onHintTap: _onHintTap,
-                onShuffleTap: _onShuffleTap,
-              ),
-            ],
-          ),
-          if (_showTutorial)
-            TutorialOverlay(
-              onDone: () => setState(() => _showTutorial = false),
             ),
-        ],
+            if (_showTutorial)
+              Positioned.fill(
+                child: TutorialOverlay(
+                  onDone: () => setState(() => _showTutorial = false),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

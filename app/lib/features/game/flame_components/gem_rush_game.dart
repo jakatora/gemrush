@@ -41,7 +41,6 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   int movesLeft = 0;
   bool busy = false;
   int maxCascadeReached = 0;
-  final bool _settled = true;
 
   @override
   Color backgroundColor() => const Color(0xFF1B1640);
@@ -151,7 +150,17 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    if (_settled && size.x > 0 && size.y > 0 && isLoaded) {
+    // Po pełnym załadowaniu i gdy mamy realny rozmiar — przelicz layout.
+    if (size.x > 0 && size.y > 0 && isLoaded) {
+      renderer.updateLayout(size);
+    }
+  }
+
+  @override
+  void onMount() {
+    super.onMount();
+    // Po mount Flame ma już ostateczny size; force-sync z aktualnym rozmiarem.
+    if (size.x > 0 && size.y > 0) {
       renderer.updateLayout(size);
     }
   }
