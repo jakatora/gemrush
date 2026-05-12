@@ -8,9 +8,11 @@ import '../game_logic/board.dart';
 import '../game_logic/cascade_engine.dart';
 import '../game_logic/gem.dart';
 import '../game_logic/goal_checker.dart';
+import '../game_logic/hint_finder.dart';
 import '../game_logic/match_finder.dart';
 import '../game_logic/score_engine.dart';
 import '../game_logic/special_gem_effects.dart';
+import '../models/booster.dart';
 import '../models/level_data.dart';
 import 'board_renderer.dart';
 
@@ -21,9 +23,11 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     required this.onUpdate,
     required this.onWin,
     required this.onLose,
+    this.openingBoosters = const {},
   });
 
   final LevelData levelData;
+  final Set<BoosterType> openingBoosters;
   final void Function(GameSnapshot) onUpdate;
   final void Function(GameSnapshot) onWin;
   final void Function(GameSnapshot) onLose;
@@ -59,8 +63,88 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
 
     renderer = BoardRenderer(board: board, gameSize: size);
     await add(renderer);
+
+    _applyOpeningBoosters();
+
     renderer.syncFromBoard(animate: false);
     _emit();
+  }
+
+  void _applyOpeningBoosters() {
+    if (openingBoosters.contains(BoosterType.extraMoves)) {
+      movesLeft += 5;
+    }
+    if (openingBoosters.contains(BoosterType.colorBombStart)) {
+      // Wstaw color bomb na środku, podmieniając istniejący gem.
+      final center = Pos(board.rows ~/ 2, board.cols ~/ 2);
+      final cell = board.cellAt(center);
+      if (cell.isPlayable) {
+        cell.gem = Gem(
+          id: board.nextId(),
+          color: GemColor.red,
+          kind: GemKind.colorBomb,
+        );
+      }
+    }
+  }
+
+  // ============================================================
+  //  PUBLIC API — używane przez UI (booster bar, rewarded hint)
+  // ============================================================
+
+  /// Znajduje możliwy ruch i pokazuje highlight.
+  /// Zwraca true jeśli znaleziono, false jeśli trzeba shuffle.
+  bool useHint() {
+    final hint = HintFinder().findHint(board);
+    if (hint == null) return false;
+    renderer.flashHint(hint.a, hint.b);
+    return true;
+  }
+
+  /// Tasuje planszę aż znajdzie konfigurację z dostępnym ruchem.
+  Future<void> useShuffle() async {
+    busy = true;
+    board.shuffleUntilPlayable();
+    renderer.syncFromBoard(animate: true);
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    busy = false;
+  }
+
+  /// Rozbija pojedynczy klejnot na danej pozycji (booster Hammer).
+  Future<void> useHammerAt(Pos p) async {
+    if (busy) return;
+    if (!board.inBounds(p)) return;
+    final gem = board.gemAt(p);
+    if (gem == null) return;
+    busy = true;
+    board.setGem(p, null);
+    final gMoves = cascadeEngine.gravity.applyGravity(board);
+    final rMoves = cascadeEngine.gravity.refillTop(board);
+    renderer.syncFromBoard(animate: true);
+    await Future<void>.delayed(const Duration(milliseconds: 280));
+    // Następnie naturalna kaskada — jeśli powstały matche, rozwiąż.
+    final steps = cascadeEngine.processFullCascade(
+      board,
+      score: score,
+      goals: goals,
+    );
+    for (final s in steps) {
+      await renderer.animateCascadeStep(s);
+    }
+    busy = false;
+    _emit();
+    _checkWinLose();
+    // unused move maps — silencer
+    gMoves.length;
+    rMoves.length;
+  }
+
+  void _checkWinLose() {
+    if (goals.allGoalsMet) {
+      _onWin();
+    } else if (movesLeft <= 0) {
+      _onLose();
+    }
   }
 
   @override

@@ -159,6 +159,49 @@ Posortowane wg priorytetu i typu interwencji:
 
 ---
 
+## Sesja 3 — 2026-05-12 (polish & post-MVP features)
+
+**Wykonane**:
+- ✅ **HintFinder** — pełny algorytm wyszukiwania możliwego ruchu (placement: rewarded `hint` lub 50 monet)
+- ✅ **Boostery integration**:
+  - `models/booster.dart` — 5 typów boosterów z cenami
+  - `widgets/pre_game_dialog.dart` — wybór boosterów przed startem (color bomb start, hammer, shuffle)
+  - `widgets/booster_bar.dart` — pasek pod planszą z hint + shuffle (in-game)
+  - `GemRushGame.useHint() / useShuffle() / useHammerAt()` — pełna implementacja
+- ✅ **Particle effects**:
+  - `particle_helper.dart` — match burst (12 cząstek, kolorowe), sparkle (krótki)
+  - Integracja w `BoardRenderer.animateCascadeStep`: sparkle przy usuwaniu, burst przy spawn specjala
+  - Hint highlight z `flashHint()` (scale animation na obu gemach)
+- ✅ **EN localization**:
+  - `l10n.yaml` config
+  - `app_pl.arb` + `app_en.arb` (28 stringów: menu, mapa, gra, sklep, ustawienia, dialogi, światy)
+- ✅ **Daily reward system** (7-day cycle, exponential rewards 10→200 monet):
+  - `models/daily_state.dart` (Hive typeId 3)
+  - `repositories/daily_repository.dart` z `statusFor()` i `claim()` (streak detection, dzień przerwy reset)
+  - `widgets/daily_reward_card.dart` w menu (auto-hide gdy nie można odebrać)
+- ✅ **Fake services dla testów** — `FakeAdsService` z konfigurowalnym ready/reward
+- ✅ **Nowe testy** (14 dodatkowych):
+  - HintFinder (3) — null gdy brak ruchu, znajduje match-3, color bomb zawsze hint
+  - DailyState (6) — canClaim, streakBroken, nextRewardCoins cykl 7-day
+  - BoosterType (2)
+  - HUD widget (2) — score/moves/goals display + tap pause
+  - widget tests początkowe
+- ✅ **flutter analyze: 0 issues** (wszystkie 9 stylowych warnings z poprzedniej sesji naprawione)
+- ✅ **38/38 testów przechodzi**
+
+**Łącznie po 3 sesjach**:
+- ~40 plików Dart
+- 100 poziomów JSON
+- 38 testów (unit + widget)
+- 0 błędów analyze
+- Repo: https://github.com/jakatora/gemrush
+
+**Następny task**:
+> Czekanie na akcję użytkownika: konto AdMob (B-ADMOB-01), Firebase (B-FIREBASE-01).
+> W międzyczasie można jeszcze dodać: integration test (cold start → menu → gameplay), więcej widget testów (dialogi, shop), Hive adapter testy z setUp.
+
+---
+
 ## Sesja 1 — 2026-05-11 (planowanie)
 
 [Zwinięte — szczegóły w docs/ + commit history]

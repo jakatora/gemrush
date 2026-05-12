@@ -18,9 +18,9 @@ class GemRushApp extends StatelessWidget {
     final router = GoRouter(
       initialLocation: Routes.splash,
       routes: [
-        GoRoute(path: Routes.splash, builder: (_, __) => const SplashScreen()),
-        GoRoute(path: Routes.menu, builder: (_, __) => const MenuScreen()),
-        GoRoute(path: Routes.map, builder: (_, __) => const MapScreen()),
+        GoRoute(path: Routes.splash, builder: (_, _) => const SplashScreen()),
+        GoRoute(path: Routes.menu, builder: (_, _) => const MenuScreen()),
+        GoRoute(path: Routes.map, builder: (_, _) => const MapScreen()),
         GoRoute(
           path: '${Routes.game}/:id',
           builder: (_, state) {
@@ -28,10 +28,10 @@ class GemRushApp extends StatelessWidget {
             return GameScreen(levelId: id);
           },
         ),
-        GoRoute(path: Routes.shop, builder: (_, __) => const ShopScreen()),
+        GoRoute(path: Routes.shop, builder: (_, _) => const ShopScreen()),
         GoRoute(
           path: Routes.settings,
-          builder: (_, __) => const SettingsScreen(),
+          builder: (_, _) => const SettingsScreen(),
         ),
       ],
     );

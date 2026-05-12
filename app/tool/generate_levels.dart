@@ -140,10 +140,15 @@ List<String> _generateLayout(int rows, int cols, int world, int id, Random rng) 
           break;
         case 7:
           final roll = rng.nextDouble();
-          if (roll < 0.15) ch = 'K';
-          else if (roll < 0.27) ch = 'I';
-          else if (roll < 0.37) ch = 'C';
-          else if (roll < 0.42) ch = 'X';
+          if (roll < 0.15) {
+            ch = 'K';
+          } else if (roll < 0.27) {
+            ch = 'I';
+          } else if (roll < 0.37) {
+            ch = 'C';
+          } else if (roll < 0.42) {
+            ch = 'X';
+          }
           break;
       }
       buf.write(ch);

@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
 import 'data/models/app_settings.dart';
+import 'data/models/daily_state.dart';
 import 'data/models/level_progress.dart';
 import 'data/models/profile.dart';
 import 'providers/app_providers.dart';
@@ -17,12 +18,14 @@ Future<void> main() async {
   Hive.registerAdapter(ProfileAdapter());
   Hive.registerAdapter(LevelProgressAdapter());
   Hive.registerAdapter(AppSettingsAdapter());
+  Hive.registerAdapter(DailyStateAdapter());
 
   final container = ProviderContainer();
 
   await container.read(profileRepoProvider).init();
   await container.read(progressRepoProvider).init();
   await container.read(settingsRepoProvider).init();
+  await container.read(dailyRepoProvider).init();
   await container.read(audioProvider).init();
 
   final settings = container.read(settingsRepoProvider).current;

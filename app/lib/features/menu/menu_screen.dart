@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/routes.dart';
 import '../../providers/app_providers.dart';
+import 'widgets/daily_reward_card.dart';
 
 class MenuScreen extends ConsumerWidget {
   const MenuScreen({super.key});
@@ -43,6 +44,8 @@ class MenuScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                const DailyRewardCard(),
                 const Spacer(),
                 Text(
                   'GemRush',

@@ -8,8 +8,11 @@ import '../../core/constants/routes.dart';
 import '../../data/repositories/level_repository.dart';
 import '../../providers/app_providers.dart';
 import 'flame_components/gem_rush_game.dart';
+import 'models/booster.dart';
 import 'models/level_data.dart';
+import 'widgets/booster_bar.dart';
 import 'widgets/hud.dart';
+import 'widgets/pre_game_dialog.dart';
 import 'widgets/result_dialogs.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -23,10 +26,18 @@ class GameScreen extends ConsumerStatefulWidget {
 class _GameScreenState extends ConsumerState<GameScreen> {
   LevelData? _level;
   GemRushGame? _game;
-  GameSnapshot _snapshot =
-      const GameSnapshot(score: 0, movesLeft: 0, goalProgress: 0, stars: 0, isWin: false, isLose: false);
+  GameSnapshot _snapshot = const GameSnapshot(
+    score: 0,
+    movesLeft: 0,
+    goalProgress: 0,
+    stars: 0,
+    isWin: false,
+    isLose: false,
+  );
   final _repo = LevelRepository();
   String? _loadError;
+  Set<BoosterType> _openingBoosters = {};
+  bool _preGameShown = false;
 
   @override
   void initState() {
@@ -43,18 +54,55 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       setState(() => _loadError = 'Brak danych poziomu ${widget.levelId}');
       return;
     }
-    final game = GemRushGame(
-      levelData: data,
-      onUpdate: (s) {
-        if (!mounted) return;
-        setState(() => _snapshot = s);
-      },
-      onWin: _handleWin,
-      onLose: _handleLose,
+    setState(() => _level = data);
+
+    if (!_preGameShown && mounted) {
+      _preGameShown = true;
+      await _showPreGame(data);
+    } else {
+      _spawnGame(data);
+    }
+  }
+
+  Future<void> _showPreGame(LevelData data) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PreGameDialog(
+        level: data,
+        onStart: (selected) {
+          _openingBoosters = selected;
+          Navigator.of(context).pop(true);
+        },
+      ),
     );
+    if (result != true) {
+      if (mounted) context.pop();
+      return;
+    }
+    // Deduct cost
+    final cost = _openingBoosters.fold<int>(0, (s, b) => s + b.coinCost);
+    if (cost > 0) {
+      final ok = await ref.read(profileRepoProvider).spendCoins(cost);
+      if (!ok) _openingBoosters = {}; // safety
+      ref.read(coinsProvider.notifier).state =
+          ref.read(profileRepoProvider).current.coins;
+    }
+    _spawnGame(data);
+  }
+
+  void _spawnGame(LevelData data) {
     setState(() {
-      _level = data;
-      _game = game;
+      _game = GemRushGame(
+        levelData: data,
+        openingBoosters: _openingBoosters,
+        onUpdate: (s) {
+          if (!mounted) return;
+          setState(() => _snapshot = s);
+        },
+        onWin: _handleWin,
+        onLose: _handleLose,
+      );
     });
   }
 
@@ -71,7 +119,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _level!.moves - snap.movesLeft,
     );
 
-    final coinsEarned = 10 + (snap.stars > 1 ? 5 : 0) + (snap.stars > 2 ? 10 : 0);
+    final coinsEarned =
+        10 + (snap.stars > 1 ? 5 : 0) + (snap.stars > 2 ? 10 : 0);
     await profileRepo.addCoins(coinsEarned);
     ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
     await progressRepo.recordResult(
@@ -102,13 +151,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       ),
     );
 
-    final showed = await ads.maybeShowInterstitial(
+    await ads.maybeShowInterstitial(
       currentLevel: widget.levelId,
       placement: 'post_level_win',
     );
-    if (!showed && mounted) {
-      // continue without ad
-    }
 
     if (mounted) context.pop();
   }
@@ -141,6 +187,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         onRetry: () {
           if (mounted) {
             setState(() => _game = null);
+            _preGameShown = true; // skip dialog na retry
             _loadLevel();
           }
         },
@@ -162,6 +209,48 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
 
     if (mounted) context.pop();
+  }
+
+  Future<void> _onHintTap() async {
+    final ads = ref.read(adsServiceProvider);
+    final profileRepo = ref.read(profileRepoProvider);
+    if (ads.isRewardedReady('hint')) {
+      final res = await ads.showRewarded('hint');
+      if (!res.rewarded) return;
+    } else {
+      final ok = await profileRepo.spendCoins(50);
+      if (!ok) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Za mało monet')),
+          );
+        }
+        return;
+      }
+      ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
+    }
+    final found = _game?.useHint() ?? false;
+    if (!found && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Brak dostępnych ruchów — tasuję')),
+      );
+      await _game?.useShuffle();
+    }
+  }
+
+  Future<void> _onShuffleTap() async {
+    final profileRepo = ref.read(profileRepoProvider);
+    final ok = await profileRepo.spendCoins(75);
+    if (!ok) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Za mało monet')),
+        );
+      }
+      return;
+    }
+    ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
+    await _game?.useShuffle();
   }
 
   void _pauseMenu() {
@@ -212,6 +301,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             onPause: _pauseMenu,
           ),
           Expanded(child: GameWidget(game: _game!)),
+          BoosterBar(
+            busy: _game?.busy ?? false,
+            onHintTap: _onHintTap,
+            onShuffleTap: _onShuffleTap,
+          ),
         ],
       ),
     );

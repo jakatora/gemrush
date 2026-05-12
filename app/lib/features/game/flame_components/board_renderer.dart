@@ -7,6 +7,7 @@ import '../game_logic/board.dart';
 import '../game_logic/cascade_engine.dart';
 import '../game_logic/gem.dart';
 import 'gem_sprite.dart';
+import 'particle_helper.dart';
 
 /// Komponent rysujący planszę: siatkę, tła komórek (jelly/ice/blocked), gemy.
 class BoardRenderer extends PositionComponent {
@@ -168,10 +169,55 @@ class BoardRenderer extends PositionComponent {
   }
 
   Future<void> animateCascadeStep(CascadeStep step) async {
-    // Po kaskadzie synchronizujemy pełen board → animacje MoveEffect
-    // (gravity + refill) wystartują z dla wszystkich sprite'ów, których
-    // pozycja się zmieniła. Sprite'y usuniętych gemów znikają.
+    // Particle burst dla każdego usuniętego pola — kolor zgodny z gemem.
+    for (final p in step.removed) {
+      final pos = cellCenter(p);
+      // gem na board już zwykle usunięty, więc kolor z step nieznany — bierzemy biały sparkle.
+      add(buildSparkle(position: pos));
+    }
+    // Specjale przy spawn — większy burst.
+    for (final entry in step.spawnedSpecials.entries) {
+      final pos = cellCenter(entry.key);
+      add(buildMatchBurst(
+        position: pos,
+        color: _flameColorOf(entry.value),
+        count: 16,
+        radius: 36,
+      ));
+    }
     syncFromBoard(animate: true);
     await Future<void>.delayed(const Duration(milliseconds: 280));
+  }
+
+  Color _flameColorOf(Gem gem) {
+    switch (gem.color) {
+      case GemColor.red:
+        return AppColors.gemRed;
+      case GemColor.blue:
+        return AppColors.gemBlue;
+      case GemColor.green:
+        return AppColors.gemGreen;
+      case GemColor.yellow:
+        return AppColors.gemYellow;
+      case GemColor.purple:
+        return AppColors.gemPurple;
+      case GemColor.orange:
+        return AppColors.gemOrange;
+    }
+  }
+
+  /// Highlight ruchu (rewarded hint).
+  void flashHint(Pos a, Pos b) {
+    final sa = _sprites[board.gemAt(a)?.id];
+    final sb = _sprites[board.gemAt(b)?.id];
+    for (final s in [sa, sb]) {
+      if (s == null) continue;
+      s.add(SequenceEffect([
+        ScaleEffect.to(Vector2.all(1.2),
+            EffectController(duration: 0.2, alternate: true)),
+        ScaleEffect.to(Vector2.all(1.2),
+            EffectController(duration: 0.2, alternate: true)),
+      ]));
+    }
   }
 }
