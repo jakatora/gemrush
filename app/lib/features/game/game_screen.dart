@@ -175,9 +175,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
       ('rookie', progressRepo.highestUnlocked),
       ('persistent', progressRepo.highestUnlocked),
       ('master', progressRepo.highestUnlocked),
+      ('legend', progressRepo.highestUnlocked),
       ('star_hunter', progressRepo.totalStars),
       ('star_master', progressRepo.totalStars),
       ('star_perfectionist', progressRepo.totalStars),
+      ('star_legend', progressRepo.totalStars),
       ('big_spender', stats.current.totalCoinsSpent),
     ];
     if ((_game?.maxCascadeReached ?? 0) >= 5) {

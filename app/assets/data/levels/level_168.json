@@ -1,0 +1,41 @@
+{
+  "id": 168,
+  "world": 12,
+  "boardSize": [
+    9,
+    9
+  ],
+  "moves": 15,
+  "goals": [
+    {
+      "type": "score",
+      "target": 183500
+    },
+    {
+      "type": "clearObstacles",
+      "target": 24
+    }
+  ],
+  "starThresholds": [
+    183500,
+    275250,
+    458750
+  ],
+  "layout": [
+    "CGGGIGGGG",
+    "GCGIGIGGC",
+    "GGGGIGGGG",
+    "GGGGGGIGG",
+    "GGGGIIIGG",
+    "GGGGIIGGG",
+    "GGGIIGIGG",
+    "ICGGIGGCG",
+    "CCGGGGGCI"
+  ],
+  "allowedColors": [
+    "red",
+    "green",
+    "purple",
+    "orange"
+  ]
+}

@@ -62,9 +62,16 @@ class AchievementDef {
     AchievementDef(
       id: 'master',
       name: 'Mistrz GemRush',
-      description: 'Ukończ wszystkie 100 poziomów',
+      description: 'Ukończ 100 poziomów',
       target: 100,
       coinReward: 1000,
+    ),
+    AchievementDef(
+      id: 'legend',
+      name: 'Legenda GemRush',
+      description: 'Ukończ wszystkie 200 poziomów',
+      target: 200,
+      coinReward: 3000,
     ),
     AchievementDef(
       id: 'star_hunter',
@@ -83,9 +90,16 @@ class AchievementDef {
     AchievementDef(
       id: 'star_perfectionist',
       name: 'Perfekcjonista',
-      description: 'Zdobądź wszystkie 300 gwiazdek',
+      description: 'Zdobądź 300 gwiazdek',
       target: 300,
       coinReward: 2000,
+    ),
+    AchievementDef(
+      id: 'star_legend',
+      name: 'Niebiański Władca',
+      description: 'Zdobądź wszystkie 600 gwiazdek',
+      target: 600,
+      coinReward: 5000,
     ),
     AchievementDef(
       id: 'combo_kid',

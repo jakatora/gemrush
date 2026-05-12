@@ -2,30 +2,41 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-/// Generator 100 poziomów z proceduralnym balansem.
+/// Generator 200 poziomów z proceduralnym balansem.
 ///
-/// Krzywa trudności:
-///  Świat 1 (1-15)   Tutorial Plaża    — score only, 25+ ruchów, plansza 8x8
-///  Świat 2 (16-30)  Las Kryształów    — score + clearJelly (1 warstwa), 22 ruchy
-///  Świat 3 (31-45)  Lodowe Jaskinie   — score + clearObstacles (ice), 20 ruchów
-///  Świat 4 (46-60)  Pustynia Złota    — score + clearJelly (2 warstwy), 20 ruchów
-///  Świat 5 (61-75)  Wulkaniczne Klify — score + clearObstacles (chocolate), 18 ruchów
-///  Świat 6 (76-90)  Niebiańskie Wyspy — score + collectIngredients, 18 ruchów
-///  Świat 7 (91-100) Kosmiczna Forteca — mixed, hard, 16 ruchów
+/// 14 światów × 15 (lub 10 dla bossowych) = 200 poziomów.
+///
+/// ŚWIATY 1-7 (poziomy 1-100) — CORE GAME:
+///  1 · Tutorial Plaża    (1-15)   score only, 28 ruchów, plansza 8x8
+///  2 · Las Kryształów    (16-30)  score + clearJelly (1 warstwa)
+///  3 · Lodowe Jaskinie   (31-45)  score + clearObstacles (ice)
+///  4 · Pustynia Złota    (46-60)  score + clearJelly (2 warstwy)
+///  5 · Wulkaniczne Klify (61-75)  score + chocolate
+///  6 · Niebiańskie Wyspy (76-90)  collectIngredients
+///  7 · Kosmiczna Forteca (91-100) mixed hard endgame
+///
+/// ŚWIATY 8-14 (poziomy 101-200) — END GAME:
+///  8 · Podwodne Głębiny  (101-115) jelly + ice mix, 5 kolorów
+///  9 · Magiczna Wieża    (116-130) chocolate spread + blocked walls
+/// 10 · Mroczny Las       (131-145) heavy obstacles + ingredients
+/// 11 · Cyberprzestrzeń   (146-160) max score targets, gęsta plansza
+/// 12 · Smoczy Tron       (161-175) bossowe, 4 kolory only
+/// 13 · Mglista Wyspa     (176-190) jelly 2-layer + collectIngredients
+/// 14 · Pradawne Ruiny    (191-200) finałowe 10, wszystko, 14-16 ruchów
 ///
 /// Uruchom: `dart run tool/generate_levels.dart`
 void main(List<String> args) {
   final outDir = Directory('assets/data/levels');
   outDir.createSync(recursive: true);
   final rng = Random(42); // deterministic seed → reproducible levels
-  for (var id = 1; id <= 100; id++) {
+  for (var id = 1; id <= 200; id++) {
     final level = _generateLevel(id, rng);
     final filename =
         'assets/data/levels/level_${id.toString().padLeft(3, '0')}.json';
     File(filename).writeAsStringSync(
         const JsonEncoder.withIndent('  ').convert(level));
   }
-  stdout.writeln('Wygenerowano 100 poziomów do ${outDir.path}/');
+  stdout.writeln('Wygenerowano 200 poziomów do ${outDir.path}/');
 }
 
 Map<String, dynamic> _generateLevel(int id, Random rng) {
@@ -60,11 +71,18 @@ int _worldForLevel(int id) {
   if (id <= 60) return 4;
   if (id <= 75) return 5;
   if (id <= 90) return 6;
-  return 7;
+  if (id <= 100) return 7;
+  if (id <= 115) return 8;
+  if (id <= 130) return 9;
+  if (id <= 145) return 10;
+  if (id <= 160) return 11;
+  if (id <= 175) return 12;
+  if (id <= 190) return 13;
+  return 14;
 }
 
 int _movesForLevel(int id, int world) {
-  // Bazowo: świat 1 = 28, świat 7 = 16. Wewnątrz świata: -1 ruch co kilka poziomów.
+  // Bazowo: świat 1 = 28, świat 14 = 14. Wewnątrz świata: -1 ruch co kilka poziomów.
   final base = switch (world) {
     1 => 28,
     2 => 24,
@@ -72,11 +90,18 @@ int _movesForLevel(int id, int world) {
     4 => 22,
     5 => 20,
     6 => 20,
-    _ => 18,
+    7 => 18,
+    8 => 20,
+    9 => 19,
+    10 => 18,
+    11 => 17,
+    12 => 16,
+    13 => 16,
+    _ => 15, // 14 (Pradawne Ruiny)
   };
   final positionInWorld = id - _firstIdOfWorld(world);
   final difficultyOffset = -(positionInWorld ~/ 4);
-  return (base + difficultyOffset).clamp(14, 35);
+  return (base + difficultyOffset).clamp(12, 35);
 }
 
 int _firstIdOfWorld(int world) {
@@ -88,13 +113,18 @@ int _firstIdOfWorld(int world) {
 }
 
 int _worldLevelCount(int world) {
-  if (world <= 6) return 15;
-  return 10;
+  // Świat 7 i 14 to "bossowe" z 10 poziomami; reszta po 15.
+  if (world == 7 || world == 14) return 10;
+  return 15;
 }
 
 List<String> _colorsForLevel(int world) {
+  // Mniejsza paleta = trudniej zrobić match w prawym miejscu.
   if (world <= 2) return _named([0, 1, 2, 3, 4]);
-  return _named([0, 1, 2, 3, 4, 5]);
+  if (world == 8) return _named([0, 1, 2, 3, 4]); // 5 kolorów — podwodne
+  if (world == 12) return _named([0, 2, 4, 5]); // 4 kolory — smoczy tron
+  if (world == 14) return _named([0, 1, 2, 3, 4]); // 5 kolorów — finał
+  return _named([0, 1, 2, 3, 4, 5]); // 6 kolorów
 }
 
 List<String> _named(List<int> idx) {
@@ -103,14 +133,8 @@ List<String> _named(List<int> idx) {
 }
 
 List<String> _generateLayout(int rows, int cols, int world, int id, Random rng) {
-  // Strategia:
-  // - Świat 1: pełne G (puste pole grywalne)
-  // - Świat 2: G + jelly (J) na losowych komórkach (~25%)
-  // - Świat 3: G + ice (I) na ~20%
-  // - Świat 4: G + jelly 2-warstwy (K) na ~30%
-  // - Świat 5: G + chocolate (C) na ~15%, rosnące
-  // - Świat 6: G + niedostępne komórki (X) jako narożniki "kanałów" dla ingredientów
-  // - Świat 7: mix wszystkich
+  // Strategia per świat:
+  // Tutorial → puste (G), kolejne wprowadzają mechaniki, świat 7+ kombinują wszystko.
   final positionInWorld = id - _firstIdOfWorld(world);
   final density = (positionInWorld * 0.02).clamp(0.0, 0.4);
 
@@ -150,6 +174,74 @@ List<String> _generateLayout(int rows, int cols, int world, int id, Random rng) 
             ch = 'X';
           }
           break;
+
+        // ŚWIATY 8-14 (poziomy 101-200) — coraz gęstsze
+        case 8: // Podwodne Głębiny: jelly + ice, ~40% pokrycia
+          final roll = rng.nextDouble();
+          if (roll < 0.20 + density) {
+            ch = 'J';
+          } else if (roll < 0.35 + density) {
+            ch = 'I';
+          }
+          break;
+        case 9: // Magiczna Wieża: chocolate + ściany blocked po bokach
+          if (c == 0 || c == cols - 1) {
+            if (r > 1 && r < rows - 2 && rng.nextDouble() < 0.4) ch = 'X';
+          } else if (rng.nextDouble() < 0.18 + density) {
+            ch = 'C';
+          }
+          break;
+        case 10: // Mroczny Las: jelly 2-layer + środkowe blocked
+          if (r == rows ~/ 2 &&
+              (c == cols ~/ 2 - 1 || c == cols ~/ 2 + 1) &&
+              rng.nextDouble() < 0.5) {
+            ch = 'X';
+          } else if (rng.nextDouble() < 0.25 + density) {
+            ch = 'K';
+          }
+          break;
+        case 11: // Cyberprzestrzeń: gęsta plansza wszystkim
+          final roll = rng.nextDouble();
+          if (roll < 0.15) {
+            ch = 'K';
+          } else if (roll < 0.27) {
+            ch = 'I';
+          } else if (roll < 0.40) {
+            ch = 'C';
+          } else if (roll < 0.45) {
+            ch = 'X';
+          } else if (roll < 0.55) {
+            ch = 'J';
+          }
+          break;
+        case 12: // Smoczy Tron: 4 kolory + symetryczne ognie (chocolate) w narożnikach
+          final inCorner = (r < 2 && c < 2) ||
+              (r < 2 && c >= cols - 2) ||
+              (r >= rows - 2 && c < 2) ||
+              (r >= rows - 2 && c >= cols - 2);
+          if (inCorner && rng.nextDouble() < 0.5) {
+            ch = 'C';
+          } else if (rng.nextDouble() < 0.18 + density) {
+            ch = 'I';
+          }
+          break;
+        case 13: // Mglista Wyspa: jelly 2-layer + dropy ingredient
+          if (rng.nextDouble() < 0.25 + density) ch = 'K';
+          break;
+        case 14: // Pradawne Ruiny: bossowe 10 poziomów, wszystko
+          final roll = rng.nextDouble();
+          if (roll < 0.18) {
+            ch = 'K';
+          } else if (roll < 0.32) {
+            ch = 'I';
+          } else if (roll < 0.45) {
+            ch = 'C';
+          } else if (roll < 0.50) {
+            ch = 'X';
+          } else if (roll < 0.62) {
+            ch = 'J';
+          }
+          break;
       }
       buf.write(ch);
     }
@@ -161,7 +253,7 @@ List<String> _generateLayout(int rows, int cols, int world, int id, Random rng) 
 List<Map<String, dynamic>> _generateGoals(
     int world, int id, List<String> layout) {
   final positionInWorld = id - _firstIdOfWorld(world);
-  // Score skaluje się: świat 1 start 3000 → świat 7 ~ 80000.
+  // Score skaluje się: świat 1 start 3000 → świat 14 ~ 200000.
   final baseScore = switch (world) {
     1 => 3000,
     2 => 8000,
@@ -169,7 +261,14 @@ List<Map<String, dynamic>> _generateGoals(
     4 => 22000,
     5 => 32000,
     6 => 46000,
-    _ => 65000,
+    7 => 65000,
+    8 => 80000,
+    9 => 100000,
+    10 => 125000,
+    11 => 155000,
+    12 => 180000,
+    13 => 195000,
+    _ => 220000, // 14
   };
   final scoreTarget = baseScore + positionInWorld * 500;
 
@@ -179,31 +278,26 @@ List<Map<String, dynamic>> _generateGoals(
 
   switch (world) {
     case 2:
-      final jellyCount = _countChar(layout, 'J');
-      if (jellyCount > 0) {
-        goals.add({'type': 'clearJelly', 'target': jellyCount});
-      }
+      final c = _countChar(layout, 'J');
+      if (c > 0) goals.add({'type': 'clearJelly', 'target': c});
       break;
     case 3:
-      final iceCount = _countChar(layout, 'I');
-      if (iceCount > 0) {
-        goals.add({'type': 'clearObstacles', 'target': iceCount});
-      }
+      final c = _countChar(layout, 'I');
+      if (c > 0) goals.add({'type': 'clearObstacles', 'target': c});
       break;
     case 4:
-      final jellyCount = _countChar(layout, 'K');
-      if (jellyCount > 0) {
-        goals.add({'type': 'clearJelly', 'target': jellyCount});
-      }
+      final c = _countChar(layout, 'K');
+      if (c > 0) goals.add({'type': 'clearJelly', 'target': c});
       break;
     case 5:
-      final chocoCount = _countChar(layout, 'C');
-      if (chocoCount > 0) {
-        goals.add({'type': 'clearObstacles', 'target': chocoCount});
-      }
+      final c = _countChar(layout, 'C');
+      if (c > 0) goals.add({'type': 'clearObstacles', 'target': c});
       break;
     case 6:
-      goals.add({'type': 'collectIngredients', 'target': 2 + positionInWorld ~/ 3});
+      goals.add({
+        'type': 'collectIngredients',
+        'target': 2 + positionInWorld ~/ 3,
+      });
       break;
     case 7:
       final obstacles = _countChar(layout, 'K') +
@@ -212,6 +306,61 @@ List<Map<String, dynamic>> _generateGoals(
       if (obstacles > 0) {
         goals.add({'type': 'clearObstacles', 'target': obstacles});
       }
+      break;
+    case 8:
+      final jelly = _countChar(layout, 'J');
+      final ice = _countChar(layout, 'I');
+      if (jelly > 0) goals.add({'type': 'clearJelly', 'target': jelly});
+      if (ice > 0) goals.add({'type': 'clearObstacles', 'target': ice});
+      break;
+    case 9:
+      final c = _countChar(layout, 'C');
+      if (c > 0) goals.add({'type': 'clearObstacles', 'target': c});
+      break;
+    case 10:
+      final k = _countChar(layout, 'K');
+      if (k > 0) goals.add({'type': 'clearJelly', 'target': k});
+      goals.add({
+        'type': 'collectIngredients',
+        'target': 3 + positionInWorld ~/ 3,
+      });
+      break;
+    case 11:
+      final obstacles = _countChar(layout, 'K') +
+          _countChar(layout, 'I') +
+          _countChar(layout, 'C') +
+          _countChar(layout, 'J');
+      if (obstacles > 0) {
+        goals.add({'type': 'clearObstacles', 'target': obstacles ~/ 2});
+      }
+      break;
+    case 12:
+      final c = _countChar(layout, 'C');
+      final i = _countChar(layout, 'I');
+      if (c > 0) goals.add({'type': 'clearObstacles', 'target': c + i});
+      break;
+    case 13:
+      final k = _countChar(layout, 'K');
+      if (k > 0) goals.add({'type': 'clearJelly', 'target': k});
+      goals.add({
+        'type': 'collectIngredients',
+        'target': 4 + positionInWorld ~/ 3,
+      });
+      break;
+    case 14:
+      // Bossowe poziomy 14: 3 cele jednocześnie
+      final jelly =
+          _countChar(layout, 'J') + _countChar(layout, 'K');
+      final obstacles =
+          _countChar(layout, 'I') + _countChar(layout, 'C');
+      if (jelly > 0) goals.add({'type': 'clearJelly', 'target': jelly});
+      if (obstacles > 0) {
+        goals.add({'type': 'clearObstacles', 'target': obstacles});
+      }
+      goals.add({
+        'type': 'collectIngredients',
+        'target': 3 + positionInWorld,
+      });
       break;
   }
   return goals;

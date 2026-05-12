@@ -33,7 +33,7 @@ class MapScreen extends ConsumerWidget {
         child: SafeArea(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 24),
-            itemCount: 7,
+            itemCount: worldRanges.length,
             itemBuilder: (context, idx) {
               final worldIdx = idx + 1;
               return _WorldSection(
@@ -72,6 +72,13 @@ class _WorldSection extends StatelessWidget {
     5: (name: 'Wulkaniczne Klify', icon: Icons.local_fire_department, gradient: [Color(0xFFFF4757), Color(0xFFB04CFF)]),
     6: (name: 'Niebiańskie Wyspy', icon: Icons.cloud, gradient: [Color(0xFFB7D3FF), Color(0xFFB04CFF)]),
     7: (name: 'Kosmiczna Forteca', icon: Icons.rocket_launch, gradient: [Color(0xFF170E45), Color(0xFFFF4757)]),
+    8: (name: 'Podwodne Głębiny', icon: Icons.water, gradient: [Color(0xFF005577), Color(0xFF49D88B)]),
+    9: (name: 'Magiczna Wieża', icon: Icons.castle, gradient: [Color(0xFFB04CFF), Color(0xFFFFB627)]),
+    10: (name: 'Mroczny Las', icon: Icons.park, gradient: [Color(0xFF0E1F0E), Color(0xFF49D88B)]),
+    11: (name: 'Cyberprzestrzeń', icon: Icons.developer_board, gradient: [Color(0xFF00FFEA), Color(0xFFB04CFF)]),
+    12: (name: 'Smoczy Tron', icon: Icons.whatshot, gradient: [Color(0xFF8B0000), Color(0xFFFFD23F)]),
+    13: (name: 'Mglista Wyspa', icon: Icons.foggy, gradient: [Color(0xFF707070), Color(0xFFB7D3FF)]),
+    14: (name: 'Pradawne Ruiny', icon: Icons.account_balance, gradient: [Color(0xFF3D2B1F), Color(0xFFFF4757)]),
   };
 
   @override
