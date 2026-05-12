@@ -92,7 +92,6 @@ class _PreGameDialogState extends ConsumerState<PreGameDialog> {
             ElevatedButton.icon(
               onPressed: canAfford
                   ? () {
-                      Navigator.of(context).pop();
                       widget.onStart(_selected);
                     }
                   : null,
@@ -101,7 +100,7 @@ class _PreGameDialogState extends ConsumerState<PreGameDialog> {
             ),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Anuluj',
                   style: TextStyle(color: AppColors.muted)),
             ),
