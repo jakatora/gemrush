@@ -40,6 +40,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
 
   int movesLeft = 0;
   bool busy = false;
+  int maxCascadeReached = 0;
   final bool _settled = true;
 
   @override
@@ -293,6 +294,9 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     );
 
     for (final step in steps) {
+      if (step.cascadeIndex > maxCascadeReached) {
+        maxCascadeReached = step.cascadeIndex;
+      }
       await renderer.animateCascadeStep(step);
     }
 
@@ -310,6 +314,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   }
 
   void _onWin() {
+    renderer.celebrateWin();
     final stars = goals.starsFromScore(score.score, levelData.starThresholds);
     onWin(GameSnapshot(
       score: score.score,

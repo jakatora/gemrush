@@ -64,51 +64,70 @@ class _WorldSection extends StatelessWidget {
   final void Function(int level) onTap;
   final int Function(int level) stars;
 
+  static const _worldThemes = <int, ({String name, IconData icon, List<Color> gradient})>{
+    1: (name: 'Tutorial Plaża', icon: Icons.beach_access, gradient: [Color(0xFF4F8DFF), Color(0xFFFFD23F)]),
+    2: (name: 'Las Kryształów', icon: Icons.forest, gradient: [Color(0xFF49D88B), Color(0xFF6A4BFF)]),
+    3: (name: 'Lodowe Jaskinie', icon: Icons.ac_unit, gradient: [Color(0xFFB7D3FF), Color(0xFF4F8DFF)]),
+    4: (name: 'Pustynia Złota', icon: Icons.wb_sunny, gradient: [Color(0xFFFFB627), Color(0xFFFF8838)]),
+    5: (name: 'Wulkaniczne Klify', icon: Icons.local_fire_department, gradient: [Color(0xFFFF4757), Color(0xFFB04CFF)]),
+    6: (name: 'Niebiańskie Wyspy', icon: Icons.cloud, gradient: [Color(0xFFB7D3FF), Color(0xFFB04CFF)]),
+    7: (name: 'Kosmiczna Forteca', icon: Icons.rocket_launch, gradient: [Color(0xFF170E45), Color(0xFFFF4757)]),
+  };
+
   @override
   Widget build(BuildContext context) {
-    final names = [
-      '', // 0 unused
-      'Tutorial Plaża',
-      'Las Kryształów',
-      'Lodowe Jaskinie',
-      'Pustynia Złota',
-      'Wulkaniczne Klify',
-      'Niebiańskie Wyspy',
-      'Kosmiczna Forteca',
-    ];
+    final theme = _worldThemes[worldId]!;
     final count = worldRanges[worldId]!;
     var firstId = 0;
     for (var i = 1; i < worldId; i++) {
       firstId += worldRanges[i]!;
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Świat $worldId · ${names[worldId]}',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w700,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: theme.gradient.map((c) => c.withValues(alpha: 0.3)).toList(),
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.gradient.first.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(theme.icon, color: theme.gradient.last, size: 28),
+                const SizedBox(width: 10),
+                Text(
+                  'Świat $worldId · ${theme.name}',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: List.generate(count, (i) {
-              final lvl = firstId + i + 1;
-              final isUnlocked = lvl <= unlocked;
-              return _LevelNode(
-                level: lvl,
-                unlocked: isUnlocked,
-                stars: stars(lvl),
-                onTap: isUnlocked ? () => onTap(lvl) : null,
-              );
-            }),
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: List.generate(count, (i) {
+                final lvl = firstId + i + 1;
+                final isUnlocked = lvl <= unlocked;
+                return _LevelNode(
+                  level: lvl,
+                  unlocked: isUnlocked,
+                  stars: stars(lvl),
+                  onTap: isUnlocked ? () => onTap(lvl) : null,
+                );
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }

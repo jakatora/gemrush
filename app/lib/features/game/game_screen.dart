@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/routes.dart';
 import '../../data/repositories/level_repository.dart';
 import '../../providers/app_providers.dart';
@@ -12,8 +11,10 @@ import 'models/booster.dart';
 import 'models/level_data.dart';
 import 'widgets/booster_bar.dart';
 import 'widgets/hud.dart';
+import 'widgets/pause_dialog.dart';
 import 'widgets/pre_game_dialog.dart';
 import 'widgets/result_dialogs.dart';
+import 'widgets/tutorial_overlay.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key, required this.levelId});
@@ -23,7 +24,8 @@ class GameScreen extends ConsumerStatefulWidget {
   ConsumerState<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends ConsumerState<GameScreen> {
+class _GameScreenState extends ConsumerState<GameScreen>
+    with WidgetsBindingObserver {
   LevelData? _level;
   GemRushGame? _game;
   GameSnapshot _snapshot = const GameSnapshot(
@@ -38,11 +40,34 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   String? _loadError;
   Set<BoosterType> _openingBoosters = {};
   bool _preGameShown = false;
+  bool _showTutorial = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadLevel();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      // Auto-pause: ustaw busy + zatrzymaj muzykę.
+      if (_game != null && _game!.busy == false) {
+        _game!.busy = true;
+        ref.read(audioProvider).stopMusic();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      // Po wznowieniu — jeśli żaden dialog nie jest otwarty, odblokuj grę.
+      // (Dialog Pauzy sam zarządza `busy`.)
+    }
   }
 
   Future<void> _loadLevel() async {
@@ -55,6 +80,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       return;
     }
     setState(() => _level = data);
+
+    // Tutorial — pokaż tylko gdy poziom 1 i jeszcze nie ukończony.
+    final progress = ref.read(progressRepoProvider);
+    if (widget.levelId == 1 && (progress.getLevel(1)?.stars ?? 0) == 0) {
+      _showTutorial = true;
+    }
 
     if (!_preGameShown && mounted) {
       _preGameShown = true;
@@ -129,6 +160,46 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       score: snap.score,
       won: true,
     );
+
+    // Stats + Achievements
+    final stats = ref.read(statsRepoProvider);
+    final achievements = ref.read(achievementsRepoProvider);
+    await stats.recordGamePlayed(
+      won: true,
+      score: snap.score,
+      maxCascadeStep: _game?.maxCascadeReached ?? 0,
+    );
+    await stats.recordCoinsEarned(coinsEarned);
+    final updates = <(String, int)>[
+      ('first_blood', progressRepo.highestUnlocked),
+      ('rookie', progressRepo.highestUnlocked),
+      ('persistent', progressRepo.highestUnlocked),
+      ('master', progressRepo.highestUnlocked),
+      ('star_hunter', progressRepo.totalStars),
+      ('star_master', progressRepo.totalStars),
+      ('star_perfectionist', progressRepo.totalStars),
+      ('big_spender', stats.current.totalCoinsSpent),
+    ];
+    if ((_game?.maxCascadeReached ?? 0) >= 5) {
+      updates.add(('combo_kid', 1));
+    }
+    for (final (id, value) in updates) {
+      final res = await achievements.setProgress(id, value);
+      if (res.hasUnlocks) {
+        await profileRepo.addCoins(res.coinsEarned);
+        ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
+        for (final def in res.justUnlocked) {
+          if (!mounted) break;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  '🏆 ${def.name}! +${def.coinReward} monet'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    }
 
     if (!mounted) return;
     await showDialog<void>(
@@ -254,25 +325,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   void _pauseMenu() {
+    if (_game != null) _game!.busy = true;
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Pauza'),
-        content: const Text('Wrócić do mapy świata?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Graj dalej'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.go(Routes.map);
-            },
-            child: const Text('Mapa'),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (_) => PauseDialog(
+        onResume: () {
+          if (_game != null) _game!.busy = false;
+        },
+        onRestart: () {
+          if (mounted) {
+            setState(() => _game = null);
+            _preGameShown = true;
+            _loadLevel();
+          }
+        },
+        onQuit: () => context.go(Routes.map),
       ),
     );
   }
@@ -291,21 +359,29 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
     }
     return Scaffold(
-      body: Column(
+      body: Stack(
         children: [
-          GameHud(
-            levelId: widget.levelId,
-            score: _snapshot.score,
-            movesLeft: _snapshot.movesLeft,
-            goals: _game!.goals,
-            onPause: _pauseMenu,
+          Column(
+            children: [
+              GameHud(
+                levelId: widget.levelId,
+                score: _snapshot.score,
+                movesLeft: _snapshot.movesLeft,
+                goals: _game!.goals,
+                onPause: _pauseMenu,
+              ),
+              Expanded(child: GameWidget(game: _game!)),
+              BoosterBar(
+                busy: _game?.busy ?? false,
+                onHintTap: _onHintTap,
+                onShuffleTap: _onShuffleTap,
+              ),
+            ],
           ),
-          Expanded(child: GameWidget(game: _game!)),
-          BoosterBar(
-            busy: _game?.busy ?? false,
-            onHintTap: _onHintTap,
-            onShuffleTap: _onShuffleTap,
-          ),
+          if (_showTutorial)
+            TutorialOverlay(
+              onDone: () => setState(() => _showTutorial = false),
+            ),
         ],
       ),
     );

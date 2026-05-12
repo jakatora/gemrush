@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
+import 'data/models/achievement.dart';
 import 'data/models/app_settings.dart';
 import 'data/models/daily_state.dart';
+import 'data/models/game_stats.dart';
 import 'data/models/level_progress.dart';
 import 'data/models/profile.dart';
 import 'providers/app_providers.dart';
@@ -19,6 +21,8 @@ Future<void> main() async {
   Hive.registerAdapter(LevelProgressAdapter());
   Hive.registerAdapter(AppSettingsAdapter());
   Hive.registerAdapter(DailyStateAdapter());
+  Hive.registerAdapter(AchievementProgressAdapter());
+  Hive.registerAdapter(GameStatsAdapter());
 
   final container = ProviderContainer();
 
@@ -26,6 +30,8 @@ Future<void> main() async {
   await container.read(progressRepoProvider).init();
   await container.read(settingsRepoProvider).init();
   await container.read(dailyRepoProvider).init();
+  await container.read(achievementsRepoProvider).init();
+  await container.read(statsRepoProvider).init();
   await container.read(audioProvider).init();
 
   final settings = container.read(settingsRepoProvider).current;

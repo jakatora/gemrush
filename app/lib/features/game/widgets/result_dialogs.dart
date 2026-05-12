@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../providers/app_providers.dart';
 
-class WinDialog extends ConsumerWidget {
+class WinDialog extends ConsumerStatefulWidget {
   const WinDialog({
     super.key,
     required this.score,
@@ -21,7 +21,29 @@ class WinDialog extends ConsumerWidget {
   final Future<bool> Function() onDoubleCoinsRewarded;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WinDialog> createState() => _WinDialogState();
+}
+
+class _WinDialogState extends ConsumerState<WinDialog>
+    with TickerProviderStateMixin {
+  int _starsVisible = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _animateStarsSequence();
+  }
+
+  Future<void> _animateStarsSequence() async {
+    for (var i = 1; i <= widget.stars; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      if (!mounted) return;
+      setState(() => _starsVisible = i);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ads = ref.read(adsServiceProvider);
     final rewardedReady = ads.isRewardedReady('double_coins');
 
@@ -43,19 +65,24 @@ class WinDialog extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(3, (i) {
-                final filled = i < stars;
+                final filled = i < _starsVisible;
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Icon(
-                    filled ? Icons.star : Icons.star_border,
-                    size: 56,
-                    color: filled ? AppColors.accent : AppColors.muted,
+                  child: AnimatedScale(
+                    duration: const Duration(milliseconds: 350),
+                    scale: filled ? 1.0 : 0.6,
+                    curve: Curves.elasticOut,
+                    child: Icon(
+                      filled ? Icons.star : Icons.star_border,
+                      size: 56,
+                      color: filled ? AppColors.accent : AppColors.muted,
+                    ),
                   ),
                 );
               }),
             ),
             const SizedBox(height: 12),
-            Text('Wynik: $score',
+            Text('Wynik: ${widget.score}',
                 style: const TextStyle(
                   color: AppColors.onSurface,
                   fontSize: 18,
@@ -66,7 +93,7 @@ class WinDialog extends ConsumerWidget {
               children: [
                 const Icon(Icons.monetization_on, color: AppColors.accent),
                 const SizedBox(width: 6),
-                Text('+$coinsEarned',
+                Text('+${widget.coinsEarned}',
                     style: const TextStyle(
                       color: AppColors.accent,
                       fontWeight: FontWeight.w700,
@@ -78,7 +105,7 @@ class WinDialog extends ConsumerWidget {
             if (rewardedReady)
               OutlinedButton.icon(
                 onPressed: () async {
-                  final ok = await onDoubleCoinsRewarded();
+                  final ok = await widget.onDoubleCoinsRewarded();
                   if (ok && context.mounted) Navigator.of(context).pop();
                 },
                 icon: const Icon(Icons.play_circle),
@@ -88,7 +115,7 @@ class WinDialog extends ConsumerWidget {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                onContinue();
+                widget.onContinue();
               },
               child: const Text('Dalej'),
             ),

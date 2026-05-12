@@ -8,6 +8,7 @@ import '../game_logic/cascade_engine.dart';
 import '../game_logic/gem.dart';
 import 'gem_sprite.dart';
 import 'particle_helper.dart';
+import 'score_popup.dart';
 
 /// Komponent rysujący planszę: siatkę, tła komórek (jelly/ice/blocked), gemy.
 class BoardRenderer extends PositionComponent {
@@ -169,20 +170,45 @@ class BoardRenderer extends PositionComponent {
   }
 
   Future<void> animateCascadeStep(CascadeStep step) async {
-    // Particle burst dla każdego usuniętego pola — kolor zgodny z gemem.
+    // Particle burst dla każdego usuniętego pola.
     for (final p in step.removed) {
-      final pos = cellCenter(p);
-      // gem na board już zwykle usunięty, więc kolor z step nieznany — bierzemy biały sparkle.
-      add(buildSparkle(position: pos));
+      add(buildSparkle(position: cellCenter(p)));
     }
     // Specjale przy spawn — większy burst.
     for (final entry in step.spawnedSpecials.entries) {
-      final pos = cellCenter(entry.key);
       add(buildMatchBurst(
-        position: pos,
+        position: cellCenter(entry.key),
         color: _flameColorOf(entry.value),
         count: 16,
         radius: 36,
+      ));
+    }
+    // Score popup w centroidzie usuniętych pól.
+    if (step.removed.isNotEmpty && step.pointsGained > 0) {
+      var sumX = 0.0;
+      var sumY = 0.0;
+      for (final p in step.removed) {
+        final c = cellCenter(p);
+        sumX += c.x;
+        sumY += c.y;
+      }
+      final centroid = Vector2(sumX / step.removed.length,
+          sumY / step.removed.length);
+      add(ScorePopup(
+        value: '+${step.pointsGained}',
+        position: centroid,
+        color: step.cascadeIndex >= 2
+            ? AppColors.accent
+            : Colors.white,
+      ));
+    }
+    // Combo announcer dla kaskad ≥1.
+    final label = ComboAnnouncer.labelFor(step.cascadeIndex);
+    if (label.isNotEmpty) {
+      add(ComboAnnouncer(
+        text: label,
+        position: Vector2(gameSize.x / 2, gameSize.y / 2),
+        color: ComboAnnouncer.colorFor(step.cascadeIndex),
       ));
     }
     syncFromBoard(animate: true);
@@ -206,18 +232,51 @@ class BoardRenderer extends PositionComponent {
     }
   }
 
-  /// Highlight ruchu (rewarded hint).
+  /// Highlight ruchu — pulsowanie 3× razem ze sparkle pod gemami.
   void flashHint(Pos a, Pos b) {
     final sa = _sprites[board.gemAt(a)?.id];
     final sb = _sprites[board.gemAt(b)?.id];
     for (final s in [sa, sb]) {
       if (s == null) continue;
       s.add(SequenceEffect([
-        ScaleEffect.to(Vector2.all(1.2),
-            EffectController(duration: 0.2, alternate: true)),
-        ScaleEffect.to(Vector2.all(1.2),
-            EffectController(duration: 0.2, alternate: true)),
+        for (var i = 0; i < 3; i++) ...[
+          ScaleEffect.to(
+            Vector2.all(1.25),
+            EffectController(duration: 0.18, curve: Curves.easeOut),
+          ),
+          ScaleEffect.to(
+            Vector2.all(1.0),
+            EffectController(duration: 0.18, curve: Curves.easeIn),
+          ),
+        ],
       ]));
+    }
+    // Sparkle pod każdym gemem.
+    add(buildSparkle(position: cellCenter(a), color: AppColors.accent));
+    add(buildSparkle(position: cellCenter(b), color: AppColors.accent));
+  }
+
+  /// Konfetti na całej planszy (przy wygranej).
+  void celebrateWin() {
+    final colors = [
+      AppColors.gemRed,
+      AppColors.gemBlue,
+      AppColors.gemGreen,
+      AppColors.gemYellow,
+      AppColors.gemPurple,
+      AppColors.gemOrange,
+    ];
+    final boardW = cellSize * board.cols;
+    final boardH = cellSize * board.rows;
+    final spacing = boardW / 6;
+    for (var i = 0; i < 6; i++) {
+      final pos = Vector2(originPx.dx + spacing * (i + 0.5), originPx.dy + boardH / 2);
+      add(buildMatchBurst(
+        position: pos,
+        color: colors[i % colors.length],
+        count: 24,
+        radius: 80,
+      ));
     }
   }
 }

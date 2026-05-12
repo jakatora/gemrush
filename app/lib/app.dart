@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/constants/routes.dart';
 import 'core/theme/app_theme.dart';
+import 'features/achievements/achievements_screen.dart';
 import 'features/game/game_screen.dart';
 import 'features/map/map_screen.dart';
 import 'features/menu/menu_screen.dart';
@@ -32,6 +33,10 @@ class GemRushApp extends StatelessWidget {
         GoRoute(
           path: Routes.settings,
           builder: (_, _) => const SettingsScreen(),
+        ),
+        GoRoute(
+          path: Routes.achievements,
+          builder: (_, _) => const AchievementsScreen(),
         ),
       ],
     );

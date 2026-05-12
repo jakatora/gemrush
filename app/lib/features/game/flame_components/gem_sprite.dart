@@ -50,28 +50,51 @@ class GemSprite extends PositionComponent {
     final radius = cellSize * 0.42;
     final center = Offset(cellSize / 2, cellSize / 2);
 
-    // Tło
+    // Cień
     final shadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.35)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-    canvas.drawCircle(center.translate(0, 3), radius, shadow);
+      ..color = Colors.black.withValues(alpha: 0.45)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.drawCircle(center.translate(0, 4), radius, shadow);
 
+    // Główne wypełnienie — radial gradient z 3 stopniami głębi
     final base = Paint()
       ..shader = RadialGradient(
+        center: const Alignment(-0.3, -0.3),
         colors: [
+          Color.lerp(_color, Colors.white, 0.35)!,
           _color.withValues(alpha: 0.95),
-          Color.lerp(_color, Colors.black, 0.35)!,
+          Color.lerp(_color, Colors.black, 0.55)!,
         ],
+        stops: const [0.0, 0.45, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, base);
 
-    // Połysk
+    // Ciemny outline + jasny inner ring
+    final outline = Paint()
+      ..color = Color.lerp(_color, Colors.black, 0.65)!.withValues(alpha: 0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawCircle(center, radius, outline);
+
+    final innerRing = Paint()
+      ..color = Colors.white.withValues(alpha: 0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawCircle(center, radius * 0.85, innerRing);
+
+    // Połysk główny (lewa górna)
     final highlight = Paint()
-      ..color = Colors.white.withValues(alpha: 0.55);
+      ..color = Colors.white.withValues(alpha: 0.65)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
     canvas.drawCircle(
-        center.translate(-radius * 0.35, -radius * 0.35),
+        center.translate(-radius * 0.4, -radius * 0.4),
         radius * 0.22,
         highlight);
+    // Mały drugi rozbłysk
+    canvas.drawCircle(
+        center.translate(-radius * 0.55, -radius * 0.15),
+        radius * 0.08,
+        Paint()..color = Colors.white.withValues(alpha: 0.5));
 
     _renderShapeOverlay(canvas, center, radius);
     _renderKindOverlay(canvas, center, radius);

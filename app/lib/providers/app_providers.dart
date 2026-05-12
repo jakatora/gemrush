@@ -6,10 +6,12 @@ import '../core/services/audio_service.dart';
 import '../core/services/consent_service.dart';
 import '../core/services/haptics_service.dart';
 import '../core/services/iap_service.dart';
+import '../data/repositories/achievements_repository.dart';
 import '../data/repositories/daily_repository.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/progress_repository.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/repositories/stats_repository.dart';
 
 /// Pojedyncze providery serwisów. Wszystkie ustawiane przez `init()` w `main.dart`.
 final analyticsProvider = Provider<AnalyticsService>((_) => AnalyticsService());
@@ -24,6 +26,9 @@ final profileRepoProvider = Provider<ProfileRepository>((_) => ProfileRepository
 final progressRepoProvider = Provider<ProgressRepository>((_) => ProgressRepository());
 final settingsRepoProvider = Provider<SettingsRepository>((_) => SettingsRepository());
 final dailyRepoProvider = Provider<DailyRepository>((_) => DailyRepository());
+final achievementsRepoProvider =
+    Provider<AchievementsRepository>((_) => AchievementsRepository());
+final statsRepoProvider = Provider<StatsRepository>((_) => StatsRepository());
 
 final adsServiceProvider = Provider<AdsService>((ref) {
   final analytics = ref.read(analyticsProvider);
