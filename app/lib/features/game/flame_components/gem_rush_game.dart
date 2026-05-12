@@ -43,7 +43,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   int maxCascadeReached = 0;
 
   @override
-  Color backgroundColor() => const Color(0xFF1B1640);
+  Color backgroundColor() => const Color(0xFF2A1E70); // jasniejsze, lepiej widoczne
 
   @override
   Future<void> onLoad() async {

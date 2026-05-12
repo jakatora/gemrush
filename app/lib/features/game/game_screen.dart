@@ -80,16 +80,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
       return;
     }
     setState(() => _level = data);
-
-    // Tutorial wyłączony domyślnie — pokażemy później po opcji "Pomoc".
-    // (kiedyś: auto na lvl 1, ale przykrywało gameplay i myliło graczy)
-
-    if (!_preGameShown && mounted) {
-      _preGameShown = true;
-      await _showPreGame(data);
-    } else {
-      _spawnGame(data);
-    }
+    // PreGameDialog tymczasowo wyłączony — bezpośrednie spawn dla debugu.
+    _spawnGame(data);
   }
 
   Future<void> _showPreGame(LevelData data) async {
@@ -358,6 +350,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       );
     }
     return Scaffold(
+      backgroundColor: const Color(0xFF0E0B2C),
       body: SafeArea(
         child: Stack(
           children: [
@@ -371,7 +364,59 @@ class _GameScreenState extends ConsumerState<GameScreen>
                     goals: _game!.goals,
                     onPause: _pauseMenu,
                   ),
-                  Expanded(child: GameWidget(game: _game!)),
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color(0xFFFFB627),
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      clipBehavior: Clip.hardEdge,
+                      child: GameWidget(
+                        game: _game!,
+                        loadingBuilder: (_) => const ColoredBox(
+                          color: Color(0xFF2A1E70),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: Color(0xFFFFB627),
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Ładowanie planszy...',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        errorBuilder: (_, error) => ColoredBox(
+                          color: const Color(0xFF8B0000),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'Błąd ładowania gry:\n$error',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   BoosterBar(
                     busy: _game?.busy ?? false,
                     onHintTap: _onHintTap,
