@@ -1,0 +1,181 @@
+# Codemagic CI/CD — GemRush
+#
+# Projekt Flutter znajduje się w podkatalogu `app/`, dlatego każdy workflow
+# ma `working_directory: app`.
+#
+# ─────────────────────────────────────────────────────────────────────────
+# CO MUSISZ ZROBIĆ W UI CODEMAGIC / APPLE — ZANIM build iOS zadziała:
+#
+# 1. Apple Developer Program (99 USD/rok) — https://developer.apple.com
+# 2. App Store Connect → Users and Access → Integrations →
+#    "App Store Connect API" → wygeneruj klucz (rola: App Manager lub Admin).
+#    Pobierz plik .p8, zapisz Key ID i Issuer ID.
+# 3. Codemagic → Teams → Integrations → "App Store Connect" → dodaj ten klucz.
+#    Nazwij integrację dokładnie:  codemagic_app_store
+#    (jeśli nazwiesz inaczej — zmień nazwę poniżej w `integrations:` oraz w
+#     `app_store_connect: <nazwa>` w sekcji publishing).
+# 4. Codemagic samodzielnie utworzy App ID `com.gemrush.gemrush` oraz
+#    provisioning profiles (automatic signing) — pod warunkiem że klucz API
+#    ma rolę Admin/App Manager.
+# 5. Utwórz aplikację w App Store Connect (My Apps → +). Bundle ID:
+#    com.gemrush.gemrush.  Po utworzeniu skopiuj numeryczne "Apple ID"
+#    aplikacji i wstaw w zmiennej APP_STORE_APP_ID poniżej (oba workflowy iOS).
+#
+# Dla Androida (workflow android-internal): potrzebny keystore w Codemagic
+# (Code signing → Android) + Google Play service account JSON.
+# ─────────────────────────────────────────────────────────────────────────
+
+workflows:
+
+  # ===========================================================
+  #  iOS — build IPA + wyślij do TestFlight
+  # ===========================================================
+  ios-testflight:
+    name: iOS · TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    working_directory: app
+    integrations:
+      app_store_connect: codemagic_app_store
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.gemrush.gemrush
+      vars:
+        # ⚠️ Wstaw numeryczne Apple ID aplikacji z App Store Connect (np. 6612345678).
+        # Przy PIERWSZYM buildzie (aplikacja jeszcze nie istnieje) zostaw puste —
+        # użyjemy $PROJECT_BUILD_NUMBER. Po utworzeniu appki możesz to wypełnić.
+        APP_STORE_APP_ID: ""
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Generuj kod (Hive adaptery)
+        script: dart run build_runner build --delete-conflicting-outputs
+      - name: Pod install
+        script: |
+          cd ios && pod install
+      - name: Flutter analyze
+        script: flutter analyze
+      - name: Testy jednostkowe
+        script: flutter test
+      - name: Ustaw provisioning profiles
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --export-options-plist=$HOME/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - jakatora68@gmail.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
+
+  # ===========================================================
+  #  iOS — release do App Store (produkcja)
+  #  Uruchom ręcznie gdy gra jest gotowa do recenzji Apple.
+  # ===========================================================
+  ios-appstore-release:
+    name: iOS · App Store Release
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    working_directory: app
+    integrations:
+      app_store_connect: codemagic_app_store
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.gemrush.gemrush
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Generuj kod (Hive adaptery)
+        script: dart run build_runner build --delete-conflicting-outputs
+      - name: Pod install
+        script: |
+          cd ios && pod install
+      - name: Flutter analyze
+        script: flutter analyze
+      - name: Testy jednostkowe
+        script: flutter test
+      - name: Ustaw provisioning profiles
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --export-options-plist=$HOME/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - jakatora68@gmail.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false   # zmień na true gdy chcesz auto-submit do recenzji
+
+  # ===========================================================
+  #  Android — build AAB do Google Play Internal Testing
+  #  (działa też w pełni z Windows, ale tu jest dla kompletu CI)
+  # ===========================================================
+  android-internal:
+    name: Android · Internal Testing
+    instance_type: linux_x2
+    max_build_duration: 60
+    working_directory: app
+    environment:
+      android_signing:
+        - gemrush_keystore
+      vars:
+        PACKAGE_NAME: com.gemrush.gemrush
+      flutter: stable
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Generuj kod (Hive adaptery)
+        script: dart run build_runner build --delete-conflicting-outputs
+      - name: Flutter analyze
+        script: flutter analyze
+      - name: Testy jednostkowe
+        script: flutter test
+      - name: Build AAB
+        script: |
+          flutter build appbundle --release \
+            --build-number=$PROJECT_BUILD_NUMBER
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/**/mapping.txt
+    publishing:
+      email:
+        recipients:
+          - jakatora68@gmail.com
+        notify:
+          success: true
+          failure: true
+      # google_play:
+      #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal
+      #   submit_as_draft: true

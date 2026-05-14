@@ -84,6 +84,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     _spawnGame(data);
   }
 
+  // ignore: unused_element
   Future<void> _showPreGame(LevelData data) async {
     final result = await showDialog<bool>(
       context: context,
