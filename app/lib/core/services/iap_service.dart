@@ -58,7 +58,15 @@ class IapService {
   StreamSubscription<List<PurchaseDetails>>? _sub;
 
   Future<void> init() async {
-    _available = await _iap.isAvailable();
+    // in_app_purchase ma implementacje tylko na Android/iOS. Na desktopie
+    // odwołanie do platformy rzuca LateInitializationError — łapiemy je tu.
+    try {
+      _available = await _iap.isAvailable();
+    } catch (e) {
+      _available = false;
+      if (kDebugMode) debugPrint('[iap] niedostępne na tej platformie: $e');
+      return;
+    }
     if (!_available) {
       if (kDebugMode) debugPrint('[iap] store not available');
       return;

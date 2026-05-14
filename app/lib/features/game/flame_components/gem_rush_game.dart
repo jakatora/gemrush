@@ -33,7 +33,10 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   final void Function(GameSnapshot) onLose;
 
   late Board board;
-  late GoalChecker goals;
+  // `goals` jest czytane przez GameHud w build() — czyli ZANIM async onLoad()
+  // się wykona. Dlatego inicjalizujemy je leniwie z levelData (dostępne od
+  // konstrukcji), zamiast w onLoad. Bez tego: LateInitializationError → szary ekran.
+  late final GoalChecker goals = GoalChecker(levelData.goals);
   final ScoreEngine score = ScoreEngine();
   final CascadeEngine cascadeEngine = CascadeEngine();
   late BoardRenderer renderer;
@@ -59,7 +62,6 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     if (!board.hasAnyValidMove()) {
       board.shuffleUntilPlayable();
     }
-    goals = GoalChecker(levelData.goals);
 
     renderer = BoardRenderer(board: board, gameSize: size);
     await add(renderer);

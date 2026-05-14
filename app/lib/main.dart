@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,27 +42,42 @@ Future<void> main() async {
   container.read(audioProvider).musicEnabled = settings.musicEnabled;
   container.read(hapticsProvider).enabled = settings.hapticsEnabled;
 
-  // Consent + AdMob — fire-and-forget, nie blokuje runApp.
-  () async {
-    final consent = container.read(consentProvider);
-    final canAds = await consent.requestConsent();
-    await consent.requestATTIfNeeded();
-    if (canAds) {
-      await container.read(adsServiceProvider).init();
-      final ads = container.read(adsServiceProvider);
-      await ads.preloadRewarded('extra_life');
-      await ads.preloadRewarded('extra_moves');
-      await ads.preloadRewarded('hint');
-      await ads.preloadRewarded('double_coins');
-    }
-  }();
+  // AdMob i IAP istnieją TYLKO na Android/iOS. Na desktopie (Windows/macOS/Linux)
+  // pluginy nie mają implementacji i rzucają wyjątki — dlatego pomijamy je
+  // całkowicie. Gra działa normalnie, po prostu bez reklam i sklepu.
+  final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
-  () async {
-    await container.read(iapServiceProvider).init();
-    final profile = container.read(profileRepoProvider).current;
-    container.read(adsServiceProvider).removeAdsPurchased =
-        profile.removeAdsPurchased;
-  }();
+  if (isMobile) {
+    // Consent + AdMob — fire-and-forget, nie blokuje runApp.
+    () async {
+      try {
+        final consent = container.read(consentProvider);
+        final canAds = await consent.requestConsent();
+        await consent.requestATTIfNeeded();
+        if (canAds) {
+          final ads = container.read(adsServiceProvider);
+          await ads.init();
+          await ads.preloadRewarded('extra_life');
+          await ads.preloadRewarded('extra_moves');
+          await ads.preloadRewarded('hint');
+          await ads.preloadRewarded('double_coins');
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[main] ads init skipped: $e');
+      }
+    }();
+
+    () async {
+      try {
+        await container.read(iapServiceProvider).init();
+        final profile = container.read(profileRepoProvider).current;
+        container.read(adsServiceProvider).removeAdsPurchased =
+            profile.removeAdsPurchased;
+      } catch (e) {
+        if (kDebugMode) debugPrint('[main] iap init skipped: $e');
+      }
+    }();
+  }
 
   container.read(profileRepoProvider).regenerateLives(DateTime.now());
 

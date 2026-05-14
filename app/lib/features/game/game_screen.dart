@@ -80,11 +80,15 @@ class _GameScreenState extends ConsumerState<GameScreen>
       return;
     }
     setState(() => _level = data);
-    // PreGameDialog tymczasowo wyłączony — bezpośrednie spawn dla debugu.
-    _spawnGame(data);
+
+    if (!_preGameShown && mounted) {
+      _preGameShown = true;
+      await _showPreGame(data);
+    } else {
+      _spawnGame(data);
+    }
   }
 
-  // ignore: unused_element
   Future<void> _showPreGame(LevelData data) async {
     final result = await showDialog<bool>(
       context: context,
