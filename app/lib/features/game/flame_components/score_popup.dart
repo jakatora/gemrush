@@ -27,15 +27,13 @@ class ScorePopup extends TextComponent {
 
   @override
   Future<void> onLoad() async {
+    // TextComponent nie jest OpacityProvider → OpacityEffect rzuca wyjątek.
+    // Zamiast fade używamy ruchu w górę + usunięcia po czasie.
     add(MoveByEffect(
       Vector2(0, -50),
       EffectController(duration: 0.7, curve: Curves.easeOut),
     ));
-    add(OpacityEffect.to(
-      0.0,
-      EffectController(duration: 0.7, startDelay: 0.2),
-      onComplete: removeFromParent,
-    ));
+    add(RemoveEffect(delay: 0.7));
   }
 }
 
@@ -66,15 +64,22 @@ class ComboAnnouncer extends TextComponent {
   @override
   Future<void> onLoad() async {
     scale = Vector2.all(0.3);
-    add(ScaleEffect.to(
-      Vector2.all(1.0),
-      EffectController(duration: 0.25, curve: Curves.elasticOut),
-    ));
-    add(OpacityEffect.to(
-      0.0,
-      EffectController(duration: 0.4, startDelay: 0.6),
-      onComplete: removeFromParent,
-    ));
+    // Jeden ciąg: elastyczne wejście → hold → zniknięcie (skala→0).
+    // TextComponent nie wspiera OpacityEffect, więc zamiast fade — scale-out.
+    add(SequenceEffect([
+      ScaleEffect.to(
+        Vector2.all(1.0),
+        EffectController(duration: 0.25, curve: Curves.elasticOut),
+      ),
+      ScaleEffect.to(
+        Vector2.all(1.0),
+        EffectController(duration: 0.5),
+      ),
+      ScaleEffect.to(
+        Vector2.zero(),
+        EffectController(duration: 0.18, curve: Curves.easeIn),
+      ),
+    ], onComplete: removeFromParent));
   }
 
   /// Wybiera napis na podstawie liczby kaskady (0-indexed: 0 = pierwsza fala).
