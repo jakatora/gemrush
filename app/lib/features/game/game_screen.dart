@@ -77,6 +77,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
     setState(() => _level = data);
 
+    // Tutorial dla nowych graczy — tylko level 1 i tylko jeśli jeszcze nie ukończony.
+    final progress = ref.read(progressRepoProvider);
+    if (widget.levelId == 1 && (progress.getLevel(1)?.stars ?? 0) == 0) {
+      _showTutorial = true;
+    }
+
     if (!_preGameShown && mounted) {
       _preGameShown = true;
       await _showPreGame(data);
@@ -366,51 +372,27 @@ class _GameScreenState extends ConsumerState<GameScreen>
                     onPause: _pauseMenu,
                   ),
                   Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: const Color(0xFFFFB627),
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      clipBehavior: Clip.hardEdge,
-                      child: GameWidget(
-                        game: _game!,
-                        loadingBuilder: (_) => const ColoredBox(
-                          color: Color(0xFF2A1E70),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  color: Color(0xFFFFB627),
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Ładowanie planszy...',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    child: GameWidget(
+                      game: _game!,
+                      loadingBuilder: (_) => const ColoredBox(
+                        color: Color(0xFF2A1E70),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFFFB627),
                           ),
                         ),
-                        errorBuilder: (_, error) => ColoredBox(
-                          color: const Color(0xFF8B0000),
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                'Błąd ładowania gry:\n$error',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
+                      ),
+                      errorBuilder: (_, _) => const ColoredBox(
+                        color: Color(0xFF2A1E70),
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text(
+                              'Nie udało się załadować poziomu. Spróbuj ponownie.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
                               ),
                             ),
                           ),

@@ -57,6 +57,23 @@ workflows:
       - name: Pod install
         script: |
           cd ios && pod install
+      - name: Add PrivacyInfo.xcprivacy do Runner targetu
+        script: |
+          ruby -e '
+            require "xcodeproj"
+            project = Xcodeproj::Project.open("ios/Runner.xcodeproj")
+            target = project.targets.find { |t| t.name == "Runner" }
+            group = project.main_group.find_subpath("Runner", false)
+            existing = group.files.find { |f| f.path == "PrivacyInfo.xcprivacy" }
+            if existing.nil?
+              file_ref = group.new_file("PrivacyInfo.xcprivacy")
+              target.add_resources([file_ref])
+              project.save
+              puts "[privacy] Added PrivacyInfo.xcprivacy to Runner target"
+            else
+              puts "[privacy] PrivacyInfo already in project"
+            end
+          '
       - name: Flutter analyze
         script: flutter analyze
       - name: Testy jednostkowe
@@ -111,6 +128,23 @@ workflows:
       - name: Pod install
         script: |
           cd ios && pod install
+      - name: Add PrivacyInfo.xcprivacy do Runner targetu
+        script: |
+          ruby -e '
+            require "xcodeproj"
+            project = Xcodeproj::Project.open("ios/Runner.xcodeproj")
+            target = project.targets.find { |t| t.name == "Runner" }
+            group = project.main_group.find_subpath("Runner", false)
+            existing = group.files.find { |f| f.path == "PrivacyInfo.xcprivacy" }
+            if existing.nil?
+              file_ref = group.new_file("PrivacyInfo.xcprivacy")
+              target.add_resources([file_ref])
+              project.save
+              puts "[privacy] Added PrivacyInfo.xcprivacy to Runner target"
+            else
+              puts "[privacy] PrivacyInfo already in project"
+            end
+          '
       - name: Flutter analyze
         script: flutter analyze
       - name: Testy jednostkowe
