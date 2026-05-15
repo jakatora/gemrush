@@ -49,7 +49,7 @@ definitions:
     max_build_duration: 90
     working_directory: app
     integrations:
-      app_store_connect: codemagic_app_store
+      app_store_connect: codemagic
     environment:
       groups:
         - ios_signing  # zawiera CERTIFICATE_PRIVATE_KEY
