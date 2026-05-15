@@ -63,9 +63,37 @@ definitions:
     name: Code signing setup (persistent key)
     script: |
       set -ex
+      # Guard: jasny error gdy CERTIFICATE_PRIVATE_KEY nie został podpięty
+      # do workflow (najczęstsza przyczyna: env var w złej grupie).
+      if [ -z "$CERTIFICATE_PRIVATE_KEY" ]; then
+        echo "❌ CERTIFICATE_PRIVATE_KEY is EMPTY or UNSET."
+        echo "Verify in Codemagic UI:"
+        echo "  App settings → Environment variables → CERTIFICATE_PRIVATE_KEY"
+        echo "  - Value must be the FULL base64 content of key.b64"
+        echo "  - Group must be EXACTLY 'ios_signing' (case-sensitive)"
+        echo "  - Save and re-run build"
+        exit 1
+      fi
+      echo "✓ CERTIFICATE_PRIVATE_KEY found (length=${#CERTIFICATE_PRIVATE_KEY} chars)"
+
       keychain initialize
       echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > "$HOME/key.pem"
       chmod 600 "$HOME/key.pem"
+
+      # Verify key.pem looks like a valid PEM (starts with BEGIN line).
+      if ! head -1 "$HOME/key.pem" | grep -q "BEGIN"; then
+        echo "❌ Decoded key does not look like a PEM file (missing BEGIN line)."
+        echo "First bytes of decoded file:"
+        head -c 100 "$HOME/key.pem" | od -c | head -3
+        echo "Most likely the env var contains something OTHER than base64 of a PEM key."
+        echo "Re-run locally:"
+        echo "  openssl genrsa -out key.pem 2048"
+        echo "  base64 -w0 < key.pem > key.b64"
+        echo "Then paste key.b64 content into Codemagic env var."
+        exit 1
+      fi
+      echo "✓ key.pem is valid PEM"
+
       app-store-connect fetch-signing-files "$BUNDLE_ID" \
         --type IOS_APP_STORE \
         --create \
