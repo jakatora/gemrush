@@ -61,35 +61,45 @@ definitions:
 
   ios_signing_script: &ios_signing_script
     name: Code signing setup (persistent key)
+    # WAŻNE: NIE używamy `set -x`. Tracing pokazałby zawartość
+    # $CERTIFICATE_PRIVATE_KEY w plaintext w logu (Codemagic nie maskuje
+    # nawet "Secure" env vars gdy są echowane).
     script: |
-      set -ex
-      # Guard: jasny error gdy CERTIFICATE_PRIVATE_KEY nie został podpięty
-      # do workflow (najczęstsza przyczyna: env var w złej grupie).
-      if [ -z "$CERTIFICATE_PRIVATE_KEY" ]; then
+      set -eu
+
+      # Guard 1: zmienna podpięta?
+      if [ -z "${CERTIFICATE_PRIVATE_KEY:-}" ]; then
         echo "❌ CERTIFICATE_PRIVATE_KEY is EMPTY or UNSET."
         echo "Verify in Codemagic UI:"
         echo "  App settings → Environment variables → CERTIFICATE_PRIVATE_KEY"
         echo "  - Value must be the FULL base64 content of key.b64"
         echo "  - Group must be EXACTLY 'ios_signing' (case-sensitive)"
-        echo "  - Save and re-run build"
         exit 1
       fi
       echo "✓ CERTIFICATE_PRIVATE_KEY found (length=${#CERTIFICATE_PRIVATE_KEY} chars)"
 
       keychain initialize
-      echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > "$HOME/key.pem"
+
+      # Decode robustnie: printf (bez trailing \n), strip ALL whitespace
+      # (spacje, taby, LF, CR z Windows line endings) i null bytes, potem
+      # `openssl base64 -d -A` (znacznie bardziej tolerancyjne niż macOS
+      # coreutils base64 — radzi sobie z dowolnym formattingiem).
+      printf '%s' "$CERTIFICATE_PRIVATE_KEY" \
+        | tr -d '[:space:]\0' \
+        | openssl base64 -d -A > "$HOME/key.pem"
       chmod 600 "$HOME/key.pem"
 
-      # Verify key.pem looks like a valid PEM (starts with BEGIN line).
+      # Guard 2: czy zdekodowane jest PEM-em? (NIE pokazujemy zawartości
+      # nigdy — tylko boolean check + długość pliku w bajtach.)
+      KEY_SIZE=$(wc -c < "$HOME/key.pem" | tr -d ' ')
+      echo "✓ Decoded key file size: ${KEY_SIZE} bytes"
       if ! head -1 "$HOME/key.pem" | grep -q "BEGIN"; then
-        echo "❌ Decoded key does not look like a PEM file (missing BEGIN line)."
-        echo "First bytes of decoded file:"
-        head -c 100 "$HOME/key.pem" | od -c | head -3
-        echo "Most likely the env var contains something OTHER than base64 of a PEM key."
-        echo "Re-run locally:"
+        echo "❌ Decoded file does not start with BEGIN line — invalid PEM."
+        echo "Likely cause: CERTIFICATE_PRIVATE_KEY does not contain base64"
+        echo "of a PEM key. Regenerate lokalnie:"
         echo "  openssl genrsa -out key.pem 2048"
         echo "  base64 -w0 < key.pem > key.b64"
-        echo "Then paste key.b64 content into Codemagic env var."
+        echo "Paste key.b64 content into Codemagic env var."
         exit 1
       fi
       echo "✓ key.pem is valid PEM"
