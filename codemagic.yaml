@@ -1,89 +1,129 @@
 # Codemagic CI/CD — GemRush
 #
-# Projekt Flutter znajduje się w podkatalogu `app/`, dlatego każdy workflow
-# ma `working_directory: app`.
+# Stosowany pattern bazuje na wnioskach z realnych buildów (zapisane w
+# pamięci Claude'a jako reference_codemagic_flutter_ios.md):
+#   - persistent private key (CERTIFICATE_PRIVATE_KEY env var) — unika
+#     limitu 1-2 Distribution certów Apple (HTTP 409)
+#   - BRAK deklaratywnego `ios_signing:` blocka w environment (jego
+#     pre-check pada na "No matching profiles" przed naszymi skryptami)
+#   - signing setup w skrypcie via app-store-connect fetch-signing-files
+#   - export_options.plist generowany przez xcode-project use-profiles
+#     (nie ręcznie)
+#   - pinned Flutter version (cached, unika timeoutów CDN)
+#   - build_number = $BUILD_NUMBER + 100 (offset bezpieczeństwa)
 #
 # ─────────────────────────────────────────────────────────────────────────
-# CO MUSISZ ZROBIĆ W UI CODEMAGIC / APPLE — ZANIM build iOS zadziała:
+# SETUP W UI CODEMAGIC (jednorazowo):
 #
-# 1. Apple Developer Program (99 USD/rok) — https://developer.apple.com
-# 2. App Store Connect → Users and Access → Integrations →
-#    "App Store Connect API" → wygeneruj klucz (rola: App Manager lub Admin).
-#    Pobierz plik .p8, zapisz Key ID i Issuer ID.
-# 3. Codemagic → Teams → Integrations → "App Store Connect" → dodaj ten klucz.
-#    Nazwij integrację dokładnie:  codemagic_app_store
-#    (jeśli nazwiesz inaczej — zmień nazwę poniżej w `integrations:` oraz w
-#     `app_store_connect: <nazwa>` w sekcji publishing).
-# 4. Codemagic samodzielnie utworzy App ID `com.gemrush.gemrush` oraz
-#    provisioning profiles (automatic signing) — pod warunkiem że klucz API
-#    ma rolę Admin/App Manager.
-# 5. Utwórz aplikację w App Store Connect (My Apps → +). Bundle ID:
-#    com.gemrush.gemrush.  Po utworzeniu skopiuj numeryczne "Apple ID"
-#    aplikacji i wstaw w zmiennej APP_STORE_APP_ID poniżej (oba workflowy iOS).
+# 1. Apple Developer Program (99 USD/rok) + App ID `com.gemrush.gemrush`
+#    zarejestrowany w developer.apple.com → Identifiers (capabilities:
+#    In-App Purchase).
+# 2. App Store Connect → My Apps → "+" → wybierz bundle ID
+#    `com.gemrush.gemrush`, name "GemRush". Paid Apps Agreement + Bank +
+#    W-8BEN podpisane.
+# 3. App Store Connect → Users and Access → Integrations →
+#    "App Store Connect API" → wygeneruj klucz z rolą **Admin** (Developer
+#    nie wystarczy). Pobierz `.p8`, zapisz Key ID + Issuer ID.
+# 4. Codemagic → Teams → Integrations → App Store Connect → wgraj klucz.
+#    Nazwa: **`codemagic_app_store`** (musi się zgadzać z `integrations:`
+#    poniżej).
+# 5. Wygeneruj LOKALNIE persistent private key:
+#       openssl genrsa -out key.pem 2048
+#       base64 -w0 < key.pem > key.b64
+#    Codemagic → App settings → Environment variables → dodaj:
+#       Name:     CERTIFICATE_PRIVATE_KEY
+#       Value:    [zawartość pliku key.b64]
+#       Secure:   ✅
+#       Group:    ios_signing   (musi być w grupie, nie default)
+# 6. Apple Developer Portal: jeśli masz aktywne Distribution certy z
+#    poprzednich nieudanych buildów, REVOKE je wszystkie. Codemagic
+#    utworzy nowy z naszym persistent key na pierwszym buildzie.
 #
-# Dla Androida (workflow android-internal): potrzebny keystore w Codemagic
-# (Code signing → Android) + Google Play service account JSON.
+# Dla Androida: keystore w Codemagic (Code signing → Android) +
+# Google Play service account JSON (opcjonalne, dla auto-publish).
 # ─────────────────────────────────────────────────────────────────────────
 
-workflows:
-
-  # ===========================================================
-  #  iOS — build IPA + wyślij do TestFlight
-  # ===========================================================
-  ios-testflight:
-    name: iOS · TestFlight
+definitions:
+  ios_environment: &ios_environment
     instance_type: mac_mini_m2
     max_build_duration: 90
     working_directory: app
     integrations:
       app_store_connect: codemagic_app_store
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.gemrush.gemrush
-      # Opcjonalnie po utworzeniu apki w App Store Connect dodaj w UI Codemagic
-      # (Environment variables) zmienna APP_STORE_APP_ID z numerycznym ID,
-      # zeby uzyc auto-incremented TestFlight build number. Bez tego dziala
-      # $PROJECT_BUILD_NUMBER ktore jest wystarczajace.
-      flutter: stable
+      groups:
+        - ios_signing  # zawiera CERTIFICATE_PRIVATE_KEY
+      vars:
+        BUNDLE_ID: com.gemrush.gemrush
+      flutter: 3.38.7
       xcode: latest
       cocoapods: default
+
+  ios_signing_script: &ios_signing_script
+    name: Code signing setup (persistent key)
+    script: |
+      set -ex
+      keychain initialize
+      echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > "$HOME/key.pem"
+      chmod 600 "$HOME/key.pem"
+      app-store-connect fetch-signing-files "$BUNDLE_ID" \
+        --type IOS_APP_STORE \
+        --create \
+        --certificate-key=@file:"$HOME/key.pem"
+      keychain add-certificates
+      xcode-project use-profiles \
+        --export-options-plist "$CM_BUILD_DIR/export_options.plist"
+
+  ios_privacy_step: &ios_privacy_step
+    name: Add PrivacyInfo.xcprivacy do Runner targetu
+    script: |
+      ruby -e '
+        require "xcodeproj"
+        project = Xcodeproj::Project.open("ios/Runner.xcodeproj")
+        target = project.targets.find { |t| t.name == "Runner" }
+        group = project.main_group.find_subpath("Runner", false)
+        existing = group.files.find { |f| f.path == "PrivacyInfo.xcprivacy" }
+        if existing.nil?
+          file_ref = group.new_file("PrivacyInfo.xcprivacy")
+          target.add_resources([file_ref])
+          project.save
+          puts "[privacy] Added PrivacyInfo.xcprivacy to Runner target"
+        else
+          puts "[privacy] PrivacyInfo already in project"
+        end
+      '
+
+workflows:
+
+  # ===========================================================
+  #  iOS — TestFlight (uruchamiaj na każdym pushu do main)
+  # ===========================================================
+  ios-testflight:
+    name: iOS · TestFlight
+    <<: *ios_environment
     scripts:
       - name: Flutter pub get
         script: flutter pub get
       - name: Generuj kod (Hive adaptery)
         script: dart run build_runner build --delete-conflicting-outputs
+      - name: Generuj launcher icons (skip jeśli brak źródła)
+        script: dart run flutter_launcher_icons || echo "skipped"
       - name: Pod install
         script: |
           cd ios && pod install
-      - name: Add PrivacyInfo.xcprivacy do Runner targetu
-        script: |
-          ruby -e '
-            require "xcodeproj"
-            project = Xcodeproj::Project.open("ios/Runner.xcodeproj")
-            target = project.targets.find { |t| t.name == "Runner" }
-            group = project.main_group.find_subpath("Runner", false)
-            existing = group.files.find { |f| f.path == "PrivacyInfo.xcprivacy" }
-            if existing.nil?
-              file_ref = group.new_file("PrivacyInfo.xcprivacy")
-              target.add_resources([file_ref])
-              project.save
-              puts "[privacy] Added PrivacyInfo.xcprivacy to Runner target"
-            else
-              puts "[privacy] PrivacyInfo already in project"
-            end
-          '
+      - *ios_privacy_step
+      - *ios_signing_script
       - name: Flutter analyze
         script: flutter analyze
       - name: Testy jednostkowe
         script: flutter test
-      - name: Ustaw provisioning profiles
-        script: xcode-project use-profiles
       - name: Build IPA
         script: |
-          flutter build ipa --release \
-            --build-number=$PROJECT_BUILD_NUMBER \
-            --export-options-plist=$HOME/export_options.plist
+          flutter build ipa \
+            --release \
+            --build-name=1.0.0 \
+            --build-number=$(($BUILD_NUMBER + 100)) \
+            --export-options-plist="$CM_BUILD_DIR/export_options.plist"
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
@@ -102,59 +142,34 @@ workflows:
           - Internal Testers
 
   # ===========================================================
-  #  iOS — release do App Store (produkcja)
-  #  Uruchom ręcznie gdy gra jest gotowa do recenzji Apple.
+  #  iOS — App Store Release (manual trigger gdy gotowe do recenzji)
   # ===========================================================
   ios-appstore-release:
     name: iOS · App Store Release
-    instance_type: mac_mini_m2
-    max_build_duration: 90
-    working_directory: app
-    integrations:
-      app_store_connect: codemagic_app_store
-    environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.gemrush.gemrush
-      flutter: stable
-      xcode: latest
-      cocoapods: default
+    <<: *ios_environment
     scripts:
       - name: Flutter pub get
         script: flutter pub get
       - name: Generuj kod (Hive adaptery)
         script: dart run build_runner build --delete-conflicting-outputs
+      - name: Generuj launcher icons (skip jeśli brak źródła)
+        script: dart run flutter_launcher_icons || echo "skipped"
       - name: Pod install
         script: |
           cd ios && pod install
-      - name: Add PrivacyInfo.xcprivacy do Runner targetu
-        script: |
-          ruby -e '
-            require "xcodeproj"
-            project = Xcodeproj::Project.open("ios/Runner.xcodeproj")
-            target = project.targets.find { |t| t.name == "Runner" }
-            group = project.main_group.find_subpath("Runner", false)
-            existing = group.files.find { |f| f.path == "PrivacyInfo.xcprivacy" }
-            if existing.nil?
-              file_ref = group.new_file("PrivacyInfo.xcprivacy")
-              target.add_resources([file_ref])
-              project.save
-              puts "[privacy] Added PrivacyInfo.xcprivacy to Runner target"
-            else
-              puts "[privacy] PrivacyInfo already in project"
-            end
-          '
+      - *ios_privacy_step
+      - *ios_signing_script
       - name: Flutter analyze
         script: flutter analyze
       - name: Testy jednostkowe
         script: flutter test
-      - name: Ustaw provisioning profiles
-        script: xcode-project use-profiles
       - name: Build IPA
         script: |
-          flutter build ipa --release \
-            --build-number=$PROJECT_BUILD_NUMBER \
-            --export-options-plist=$HOME/export_options.plist
+          flutter build ipa \
+            --release \
+            --build-name=1.0.0 \
+            --build-number=$(($BUILD_NUMBER + 100)) \
+            --export-options-plist="$CM_BUILD_DIR/export_options.plist"
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
@@ -172,7 +187,6 @@ workflows:
 
   # ===========================================================
   #  Android — build AAB do Google Play Internal Testing
-  #  (działa też w pełni z Windows, ale tu jest dla kompletu CI)
   # ===========================================================
   android-internal:
     name: Android · Internal Testing
@@ -184,20 +198,24 @@ workflows:
         - gemrush_keystore
       vars:
         PACKAGE_NAME: com.gemrush.gemrush
-      flutter: stable
+      flutter: 3.38.7
     scripts:
       - name: Flutter pub get
         script: flutter pub get
       - name: Generuj kod (Hive adaptery)
         script: dart run build_runner build --delete-conflicting-outputs
+      - name: Generuj launcher icons (skip jeśli brak źródła)
+        script: dart run flutter_launcher_icons || echo "skipped"
       - name: Flutter analyze
         script: flutter analyze
       - name: Testy jednostkowe
         script: flutter test
       - name: Build AAB
         script: |
-          flutter build appbundle --release \
-            --build-number=$PROJECT_BUILD_NUMBER
+          flutter build appbundle \
+            --release \
+            --build-name=1.0.0 \
+            --build-number=$(($BUILD_NUMBER + 100))
     artifacts:
       - build/app/outputs/bundle/release/*.aab
       - build/app/outputs/**/mapping.txt

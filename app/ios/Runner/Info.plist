@@ -47,6 +47,15 @@
 	<true/>
 
 	<!--
+		Encryption export compliance. Gra używa wyłącznie HTTPS i standardowego
+		krypto systemowego — to zwalnia z dodatkowych deklaracji eksportowych.
+		Bez tego klucza: "Missing Compliance" warning w TestFlight przy każdym
+		buildzie.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<!--
 		AdMob App ID — TESTOWE (zastąp produkcyjnym po założeniu konta AdMob).
 		Patrz: https://developers.google.com/admob/ios/quick-start#update_your_infoplist
 	-->
