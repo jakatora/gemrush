@@ -41,11 +41,10 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.gemrush.gemrush
-      vars:
-        # ⚠️ Wstaw numeryczne Apple ID aplikacji z App Store Connect (np. 6612345678).
-        # Przy PIERWSZYM buildzie (aplikacja jeszcze nie istnieje) zostaw puste —
-        # użyjemy $PROJECT_BUILD_NUMBER. Po utworzeniu appki możesz to wypełnić.
-        APP_STORE_APP_ID: ""
+      # Opcjonalnie po utworzeniu apki w App Store Connect dodaj w UI Codemagic
+      # (Environment variables) zmienna APP_STORE_APP_ID z numerycznym ID,
+      # zeby uzyc auto-incremented TestFlight build number. Bez tego dziala
+      # $PROJECT_BUILD_NUMBER ktore jest wystarczajace.
       flutter: stable
       xcode: latest
       cocoapods: default
