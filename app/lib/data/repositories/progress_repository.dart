@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/level_progress.dart';
@@ -9,6 +10,10 @@ class ProgressRepository {
   Future<void> init() async {
     _box = await Hive.openBox<LevelProgress>(_boxName);
   }
+
+  /// Box jako listenable — używane przez ValueListenableBuilder w MapScreen
+  /// żeby UI mapy auto-rebuild gdy zapiszemy nowy postęp z GameScreen.
+  ValueListenable<Box<LevelProgress>> listenable() => _box.listenable();
 
   LevelProgress? getLevel(int levelId) => _box.get(levelId);
 

@@ -13,7 +13,6 @@ class MapScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progressRepo = ref.watch(progressRepoProvider);
-    final unlocked = progressRepo.highestUnlocked;
 
     return Scaffold(
       appBar: AppBar(
@@ -31,17 +30,23 @@ class MapScreen extends ConsumerWidget {
           ),
         ),
         child: SafeArea(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            itemCount: worldRanges.length,
-            itemBuilder: (context, idx) {
-              final worldIdx = idx + 1;
-              return _WorldSection(
-                worldId: worldIdx,
-                unlocked: unlocked,
-                onTap: (lvl) => context.push(Routes.gameWithLevel(lvl)),
-                stars: (lvl) =>
-                    progressRepo.getLevel(lvl)?.stars ?? 0,
+          // Reaguj na zmiany w Hive boxie progress -> auto-rebuild po wygranej.
+          child: ValueListenableBuilder(
+            valueListenable: progressRepo.listenable(),
+            builder: (context, _, _) {
+              final unlocked = progressRepo.highestUnlocked;
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                itemCount: worldRanges.length,
+                itemBuilder: (context, idx) {
+                  final worldIdx = idx + 1;
+                  return _WorldSection(
+                    worldId: worldIdx,
+                    unlocked: unlocked,
+                    onTap: (lvl) => context.push(Routes.gameWithLevel(lvl)),
+                    stars: (lvl) => progressRepo.getLevel(lvl)?.stars ?? 0,
+                  );
+                },
               );
             },
           ),
