@@ -31,6 +31,8 @@ Future<void> main() async {
 
   await container.read(profileRepoProvider).init();
   await container.read(progressRepoProvider).init();
+  // Heal: napraw stare zapisy "won ze stars=0" które blokowaly kolejny poziom.
+  await container.read(progressRepoProvider).healZeroStarWins();
   await container.read(settingsRepoProvider).init();
   await container.read(dailyRepoProvider).init();
   await container.read(achievementsRepoProvider).init();

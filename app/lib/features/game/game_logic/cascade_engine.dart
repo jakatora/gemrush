@@ -77,8 +77,10 @@ class CascadeEngine {
         break;
       }
 
-      // 4. Aktualizuj score
-      score.awardMatches(matches);
+      // 4. Policz punkty (matche + bonusy specjali) i ZAWSZE wpychaj
+      //    tę samą sumę do score.score I do goals — inaczej rozjadą się
+      //    i można wygrać poziom mając score < starThreshold (= 0 gwiazdek
+      //    = kolejny poziom locked).
       var pts = 0;
       for (final m in matches) {
         pts += score.pointsForMatch(m);
@@ -89,6 +91,7 @@ class CascadeEngine {
           pts += score.pointsForRemoval(kind: g.kind);
         }
       }
+      score.addScore(pts);
 
       // 5. Aktualizuj cele
       goals.addScore(pts);

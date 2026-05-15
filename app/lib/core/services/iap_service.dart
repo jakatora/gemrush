@@ -105,7 +105,12 @@ class IapService {
   }
 
   Future<void> restorePurchases() async {
-    await _iap.restorePurchases();
+    if (!_available) return; // nie dostępne na desktopie / przed init
+    try {
+      await _iap.restorePurchases();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[iap] restore nieobsłużony: $e');
+    }
   }
 
   Future<void> _onPurchaseUpdate(List<PurchaseDetails> purchases) async {

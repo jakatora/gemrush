@@ -57,16 +57,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Flame sam pauzuje pętlę gry na background — nie potrzebujemy ręcznie
+    // ustawiać `busy`. Wcześniej setowalismy busy=true na pause ale nie
+    // odznaczalismy na resume → gra zostawala zamrozona po powrocie z tla.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      // Auto-pause: ustaw busy + zatrzymaj muzykę.
-      if (_game != null && _game!.busy == false) {
-        _game!.busy = true;
-        ref.read(audioProvider).stopMusic();
-      }
-    } else if (state == AppLifecycleState.resumed) {
-      // Po wznowieniu — jeśli żaden dialog nie jest otwarty, odblokuj grę.
-      // (Dialog Pauzy sam zarządza `busy`.)
+      ref.read(audioProvider).stopMusic();
     }
   }
 

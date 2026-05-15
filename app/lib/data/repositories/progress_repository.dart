@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/level_progress.dart';
+import 'level_repository.dart' show totalLevels;
 
 class ProgressRepository {
   static const _boxName = 'progress';
@@ -23,13 +24,17 @@ class ProgressRepository {
     required int score,
     required bool won,
   }) async {
+    // Safety net: jeśli wygrał (warunek poziomu spełniony), to z definicji
+    // ma co najmniej 1 gwiazdkę — niezależnie od wyliczenia. Bez tego stars=0
+    // blokuje odblokowanie kolejnego poziomu.
+    final effectiveStars = won ? (stars < 1 ? 1 : stars) : 0;
     final existing = _box.get(levelId);
     if (existing == null) {
       await _box.put(
         levelId,
         LevelProgress(
           levelId: levelId,
-          stars: won ? stars : 0,
+          stars: effectiveStars,
           bestScore: won ? score : 0,
           attempts: 1,
         ),
@@ -38,10 +43,25 @@ class ProgressRepository {
     }
     existing.attempts += 1;
     if (won) {
-      if (stars > existing.stars) existing.stars = stars;
+      if (effectiveStars > existing.stars) existing.stars = effectiveStars;
       if (score > existing.bestScore) existing.bestScore = score;
     }
     await existing.save();
+  }
+
+  /// One-time heal: jeśli istnieją zapisy z `attempts > 0 && stars == 0` które
+  /// powstały z poprzedniego buga (won bez nagrody gwiazdy), bump stars→1.
+  /// Wywoływane raz przy starcie aplikacji w main.dart.
+  Future<int> healZeroStarWins() async {
+    var healed = 0;
+    for (final p in _box.values.toList()) {
+      if (p.attempts > 0 && p.stars == 0 && p.bestScore > 0) {
+        p.stars = 1;
+        await p.save();
+        healed += 1;
+      }
+    }
+    return healed;
   }
 
   bool isUnlocked(int levelId) {
@@ -52,7 +72,7 @@ class ProgressRepository {
 
   int get highestUnlocked {
     var i = 1;
-    while (i <= 100 && isUnlocked(i + 1)) {
+    while (i < totalLevels && isUnlocked(i + 1)) {
       i += 1;
     }
     return i;
