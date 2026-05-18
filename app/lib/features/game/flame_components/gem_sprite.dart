@@ -12,6 +12,10 @@ class GemSprite extends PositionComponent {
   Gem gem;
   double cellSize;
 
+  /// Gdy true — kształt overlay jest wyraźniejszy (grubsza obwódka,
+  /// pełne wypełnienie), żeby gemy były rozpoznawalne dla daltonistów.
+  static bool colorBlindMode = false;
+
   GemSprite({
     required this.gem,
     required this.cellSize,
@@ -146,8 +150,9 @@ class GemSprite extends PositionComponent {
   /// Kształt dla a11y (daltonisty rozpoznają po kształcie nie tylko po kolorze).
   void _renderShapeOverlay(Canvas canvas, Offset center, double radius) {
     final p = Paint()
-      ..color = Colors.white.withValues(alpha: 0.85)
-      ..strokeWidth = 2
+      ..color = Colors.white.withValues(
+          alpha: colorBlindMode ? 1.0 : 0.85)
+      ..strokeWidth = colorBlindMode ? 3.5 : 2
       ..style = PaintingStyle.stroke;
     final r = radius * 0.55;
     switch (gem.color) {

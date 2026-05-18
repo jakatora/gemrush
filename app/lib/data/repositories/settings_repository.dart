@@ -41,4 +41,9 @@ class SettingsRepository {
     current.consentGiven = v;
     await current.save();
   }
+
+  Future<void> setColorBlindMode(bool v) async {
+    current.colorBlindMode = v;
+    await current.save();
+  }
 }

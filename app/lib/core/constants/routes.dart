@@ -10,6 +10,7 @@ class Routes {
   static const achievements = '/achievements';
   static const stats = '/stats';
   static const quests = '/quests';
+  static const onboarding = '/onboarding';
 
   static String gameWithLevel(int levelId) => '/game/$levelId';
 }

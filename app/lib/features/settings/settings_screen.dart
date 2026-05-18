@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../game/flame_components/gem_sprite.dart';
 import '../../providers/app_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -55,6 +56,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (v) async {
               await repo.setHaptics(v);
               ref.read(hapticsProvider).enabled = v;
+              setState(() {});
+            },
+          ),
+          const _SectionHeader('Dostępność'),
+          SwitchListTile(
+            value: s.colorBlindMode,
+            title: const Text('Tryb daltonistyczny'),
+            subtitle: const Text(
+                'Wyraźniejsze kształty na klejnotach (a11y)'),
+            secondary:
+                const Icon(Icons.accessibility, color: AppColors.accent),
+            onChanged: (v) async {
+              await repo.setColorBlindMode(v);
+              GemSprite.colorBlindMode = v;
               setState(() {});
             },
           ),

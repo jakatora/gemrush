@@ -19,11 +19,15 @@ class AppSettings extends HiveObject {
   @HiveField(4)
   bool consentGiven;
 
+  @HiveField(5)
+  bool colorBlindMode;
+
   AppSettings({
     this.soundEnabled = true,
     this.musicEnabled = true,
     this.hapticsEnabled = true,
     this.language = 'pl',
     this.consentGiven = false,
+    this.colorBlindMode = false,
   });
 }

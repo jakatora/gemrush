@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/routes.dart';
+import '../onboarding/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,8 +29,11 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) context.go(Routes.menu);
+    Future.delayed(const Duration(milliseconds: 1500), () async {
+      if (!mounted) return;
+      final seen = await OnboardingScreen.wasSeen();
+      if (!mounted) return;
+      context.go(seen ? Routes.menu : Routes.onboarding);
     });
   }
 

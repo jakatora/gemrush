@@ -10,6 +10,7 @@ import 'features/menu/menu_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/shop/shop_screen.dart';
 import 'features/splash/splash_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/quests/quests_screen.dart';
 import 'features/stats/stats_screen.dart';
 
@@ -47,6 +48,10 @@ class GemRushApp extends StatelessWidget {
         GoRoute(
           path: Routes.quests,
           builder: (_, _) => const QuestsScreen(),
+        ),
+        GoRoute(
+          path: Routes.onboarding,
+          builder: (_, _) => const OnboardingScreen(),
         ),
       ],
     );

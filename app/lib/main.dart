@@ -15,6 +15,7 @@ import 'data/models/game_stats.dart';
 import 'data/models/level_progress.dart';
 import 'data/models/profile.dart';
 import 'data/models/quest.dart';
+import 'features/game/flame_components/gem_sprite.dart';
 import 'providers/app_providers.dart';
 
 Future<void> main() async {
@@ -50,6 +51,7 @@ Future<void> main() async {
   container.read(audioProvider).soundEnabled = settings.soundEnabled;
   container.read(audioProvider).musicEnabled = settings.musicEnabled;
   container.read(hapticsProvider).enabled = settings.hapticsEnabled;
+  GemSprite.colorBlindMode = settings.colorBlindMode;
 
   // AdMob i IAP istnieją TYLKO na Android/iOS. Na desktopie (Windows/macOS/Linux)
   // pluginy nie mają implementacji i rzucają wyjątki — dlatego pomijamy je
