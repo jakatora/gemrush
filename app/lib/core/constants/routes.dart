@@ -8,6 +8,7 @@ class Routes {
   static const shop = '/shop';
   static const settings = '/settings';
   static const achievements = '/achievements';
+  static const stats = '/stats';
 
   static String gameWithLevel(int levelId) => '/game/$levelId';
 }

@@ -120,6 +120,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   void _spawnGame(LevelData data) {
+    final haptics = ref.read(hapticsProvider);
     setState(() {
       _game = GemRushGame(
         levelData: data,
@@ -130,6 +131,26 @@ class _GameScreenState extends ConsumerState<GameScreen>
         },
         onWin: _handleWin,
         onLose: _handleLose,
+        onHapticEvent: (event) {
+          switch (event) {
+            case 'swap':
+              haptics.onSwap();
+            case 'match3':
+              haptics.onMatch3();
+            case 'match4':
+              haptics.onMatch4();
+            case 'match_big':
+              haptics.onMatchBig();
+            case 'special':
+              haptics.onSpecialExplode();
+            case 'cascade':
+              haptics.onCascadeCombo();
+            case 'win':
+              haptics.onLevelWin();
+            case 'lose':
+              haptics.onLevelLose();
+          }
+        },
       );
     });
   }

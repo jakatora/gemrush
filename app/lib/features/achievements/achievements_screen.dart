@@ -5,27 +5,78 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/achievement.dart';
 import '../../providers/app_providers.dart';
 
-class AchievementsScreen extends ConsumerWidget {
+enum _Filter { all, unlocked, locked }
+
+class AchievementsScreen extends ConsumerStatefulWidget {
   const AchievementsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AchievementsScreen> createState() =>
+      _AchievementsScreenState();
+}
+
+class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
+  _Filter _filter = _Filter.all;
+
+  @override
+  Widget build(BuildContext context) {
     final repo = ref.watch(achievementsRepoProvider);
     final all = repo.all();
     final unlocked = repo.unlockedCount;
     final total = AchievementDef.all.length;
 
+    final filtered = all.where((item) {
+      switch (_filter) {
+        case _Filter.all:
+          return true;
+        case _Filter.unlocked:
+          return item.progress.isUnlocked;
+        case _Filter.locked:
+          return !item.progress.isUnlocked;
+      }
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Osiągnięcia $unlocked/$total'),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: all.length,
-        itemBuilder: (context, i) {
-          final item = all[i];
-          return _AchievementTile(def: item.def, progress: item.progress);
-        },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SegmentedButton<_Filter>(
+              segments: const [
+                ButtonSegment(value: _Filter.all, label: Text('Wszystkie')),
+                ButtonSegment(value: _Filter.unlocked, label: Text('Zdobyte')),
+                ButtonSegment(value: _Filter.locked, label: Text('Do zdobycia')),
+              ],
+              selected: {_filter},
+              onSelectionChanged: (s) => setState(() => _filter = s.first),
+            ),
+          ),
+          Expanded(
+            child: filtered.isEmpty
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'Brak pozycji w tej kategorii',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) {
+                      final item = filtered[i];
+                      return _AchievementTile(
+                          def: item.def, progress: item.progress);
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -57,7 +108,22 @@ class _AchievementTile extends StatelessWidget {
               height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: unlocked ? AppColors.accent : AppColors.muted.withValues(alpha: 0.2),
+                gradient: unlocked
+                    ? const LinearGradient(
+                        colors: [AppColors.accent, AppColors.warning],
+                      )
+                    : null,
+                color: unlocked
+                    ? null
+                    : AppColors.muted.withValues(alpha: 0.2),
+                boxShadow: unlocked
+                    ? [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.5),
+                          blurRadius: 8,
+                        ),
+                      ]
+                    : null,
               ),
               child: Icon(
                 unlocked ? Icons.emoji_events : Icons.lock,
@@ -74,10 +140,12 @@ class _AchievementTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: unlocked ? AppColors.onSurface : AppColors.muted,
+                        color:
+                            unlocked ? AppColors.onSurface : AppColors.muted,
                       )),
                   Text(def.description,
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                      style: const TextStyle(
+                          color: AppColors.muted, fontSize: 12)),
                   const SizedBox(height: 6),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
@@ -91,7 +159,8 @@ class _AchievementTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text('${progress.progress}/${def.target}',
-                      style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+                      style: const TextStyle(
+                          color: AppColors.muted, fontSize: 11)),
                 ],
               ),
             ),

@@ -10,6 +10,7 @@ import 'features/menu/menu_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/shop/shop_screen.dart';
 import 'features/splash/splash_screen.dart';
+import 'features/stats/stats_screen.dart';
 
 class GemRushApp extends StatelessWidget {
   const GemRushApp({super.key});
@@ -37,6 +38,10 @@ class GemRushApp extends StatelessWidget {
         GoRoute(
           path: Routes.achievements,
           builder: (_, _) => const AchievementsScreen(),
+        ),
+        GoRoute(
+          path: Routes.stats,
+          builder: (_, _) => const StatsScreen(),
         ),
       ],
     );

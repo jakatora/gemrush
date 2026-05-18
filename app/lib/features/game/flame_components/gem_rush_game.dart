@@ -24,7 +24,13 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     required this.onWin,
     required this.onLose,
     this.openingBoosters = const {},
+    this.onHapticEvent,
   });
+
+  /// Optional callback for UI to map game events → haptics service.
+  /// Event names: 'swap', 'match3', 'match4', 'match_big', 'special',
+  /// 'cascade', 'win', 'lose'.
+  final void Function(String event)? onHapticEvent;
 
   final LevelData levelData;
   final Set<BoosterType> openingBoosters;
@@ -257,6 +263,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     final ga = board.gemAt(a);
     final gb = board.gemAt(b);
     if (ga == null || gb == null) return;
+    onHapticEvent?.call('swap');
     busy = true;
     movesLeft -= 1;
 
@@ -308,6 +315,17 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
       if (step.cascadeIndex > maxCascadeReached) {
         maxCascadeReached = step.cascadeIndex;
       }
+      // Haptics: cascade ≥ 2 → combo, 4/5+ specials → mocne.
+      if (step.cascadeIndex == 0) {
+        onHapticEvent?.call('match3');
+      } else if (step.cascadeIndex == 1) {
+        onHapticEvent?.call('match4');
+      } else {
+        onHapticEvent?.call('cascade');
+      }
+      if (step.spawnedSpecials.isNotEmpty) {
+        onHapticEvent?.call('special');
+      }
       await renderer.animateCascadeStep(step);
     }
 
@@ -326,6 +344,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
 
   void _onWin() {
     renderer.celebrateWin();
+    onHapticEvent?.call('win');
     final stars = goals.starsFromScore(score.score, levelData.starThresholds);
     onWin(GameSnapshot(
       score: score.score,
@@ -338,6 +357,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   }
 
   void _onLose() {
+    onHapticEvent?.call('lose');
     onLose(GameSnapshot(
       score: score.score,
       movesLeft: movesLeft,
