@@ -7,6 +7,7 @@ import '../../core/constants/routes.dart';
 import '../../providers/app_providers.dart';
 import 'widgets/daily_challenge_card.dart';
 import 'widgets/daily_reward_card.dart';
+import 'widgets/lives_meter.dart';
 
 class MenuScreen extends ConsumerWidget {
   const MenuScreen({super.key});
@@ -14,7 +15,6 @@ class MenuScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final coins = ref.watch(coinsProvider);
-    final lives = ref.watch(livesProvider);
 
     return Scaffold(
       body: Container(
@@ -33,11 +33,7 @@ class MenuScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _Badge(
-                      icon: Icons.favorite,
-                      color: AppColors.danger,
-                      label: '$lives',
-                    ),
+                    const LivesMeter(),
                     _Badge(
                       icon: Icons.monetization_on,
                       color: AppColors.accent,
