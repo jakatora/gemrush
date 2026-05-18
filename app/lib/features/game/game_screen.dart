@@ -143,6 +143,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
               haptics.onMatchBig();
             case 'special':
               haptics.onSpecialExplode();
+              // Quest: special_5 — utworzenie gemu specjalnego (match-4/5/L).
+              ref.read(questsRepoProvider).recordEvent(DateTime.now(),
+                  questId: 'special_5');
             case 'cascade':
               haptics.onCascadeCombo();
             case 'win':
@@ -357,6 +360,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
       ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
     }
     final found = _game?.useHint() ?? false;
+    // Quest + stats — uzycie podpowiedzi.
+    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
+        questId: 'hint_use');
+    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
+        questId: 'booster_use');
+    await ref.read(statsRepoProvider).recordBoosterUsed();
     if (!found && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Brak dostępnych ruchów — tasuję')),
@@ -378,6 +387,13 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
     ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
     await _game?.useShuffle();
+    // Quest + stats — uzycie tasowania.
+    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
+        questId: 'shuffle_1');
+    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
+        questId: 'booster_use');
+    await ref.read(statsRepoProvider).recordBoosterUsed();
+    await ref.read(statsRepoProvider).recordCoinsSpent(75);
   }
 
   void _pauseMenu() {
