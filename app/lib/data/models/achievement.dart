@@ -69,9 +69,16 @@ class AchievementDef {
     AchievementDef(
       id: 'legend',
       name: 'Legenda GemRush',
-      description: 'Ukończ wszystkie 200 poziomów',
+      description: 'Ukończ 200 poziomów',
       target: 200,
       coinReward: 3000,
+    ),
+    AchievementDef(
+      id: 'eternal',
+      name: 'Wieczny Mistrz',
+      description: 'Ukończ wszystkie 300 poziomów',
+      target: 300,
+      coinReward: 7500,
     ),
     AchievementDef(
       id: 'star_hunter',
@@ -97,9 +104,16 @@ class AchievementDef {
     AchievementDef(
       id: 'star_legend',
       name: 'Niebiański Władca',
-      description: 'Zdobądź wszystkie 600 gwiazdek',
+      description: 'Zdobądź 600 gwiazdek',
       target: 600,
       coinReward: 5000,
+    ),
+    AchievementDef(
+      id: 'star_eternal',
+      name: 'Gwiazda Wieczna',
+      description: 'Zdobądź wszystkie 900 gwiazdek',
+      target: 900,
+      coinReward: 10000,
     ),
     AchievementDef(
       id: 'combo_kid',

@@ -1,0 +1,47 @@
+{
+  "id": 267,
+  "world": 16,
+  "boardSize": [
+    9,
+    9
+  ],
+  "moves": 12,
+  "goals": [
+    {
+      "type": "score",
+      "target": 295500
+    },
+    {
+      "type": "clearObstacles",
+      "target": 22
+    },
+    {
+      "type": "collectIngredients",
+      "target": 14
+    }
+  ],
+  "starThresholds": [
+    295500,
+    443250,
+    738750
+  ],
+  "layout": [
+    "CCKGGGKGG",
+    "CCGCJJKGJ",
+    "IJKGXKGKX",
+    "GCKGKGGGK",
+    "JCKKJGCJG",
+    "IGGKGJGGK",
+    "KXGKCCGJX",
+    "GJKIJIGGG",
+    "XGGJKKGXK"
+  ],
+  "allowedColors": [
+    "red",
+    "blue",
+    "green",
+    "yellow",
+    "purple",
+    "orange"
+  ]
+}

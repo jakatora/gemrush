@@ -102,6 +102,24 @@ class WorldTheme {
       gradient: [Color(0xFF1B0F0A), Color(0xFFFF4757)],
       accent: Color(0xFFFF4757),
     ),
+    15: WorldTheme(
+      name: 'Zimowa Kraina',
+      icon: Icons.severe_cold,
+      gradient: [Color(0xFF0A1F3A), Color(0xFFB7D3FF)],
+      accent: Color(0xFFB7D3FF),
+    ),
+    16: WorldTheme(
+      name: 'Diamentowa Kopalnia',
+      icon: Icons.diamond,
+      gradient: [Color(0xFF1A0A2E), Color(0xFFB04CFF)],
+      accent: Color(0xFFB04CFF),
+    ),
+    17: WorldTheme(
+      name: 'Wieczność',
+      icon: Icons.all_inclusive,
+      gradient: [Color(0xFF000000), Color(0xFFFFD23F)],
+      accent: Color(0xFFFFD23F),
+    ),
   };
 
   static WorldTheme forLevel(int levelId) {

@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-/// Generator 200 poziomów z proceduralnym balansem.
+/// Generator 300 poziomów z proceduralnym balansem.
 ///
-/// 14 światów × 15 (lub 10 dla bossowych) = 200 poziomów.
+/// 17 światów = 200 (oryginalnych) + 100 (rozszerzonych post-launch).
 ///
 /// ŚWIATY 1-7 (poziomy 1-100) — CORE GAME:
 ///  1 · Tutorial Plaża    (1-15)   score only, 28 ruchów, plansza 8x8
@@ -14,6 +14,11 @@ import 'dart:math';
 ///  5 · Wulkaniczne Klify (61-75)  score + chocolate
 ///  6 · Niebiańskie Wyspy (76-90)  collectIngredients
 ///  7 · Kosmiczna Forteca (91-100) mixed hard endgame
+///
+/// ŚWIATY 15-17 (poziomy 201-300) — POST-LAUNCH EXPANSION:
+/// 15 · Zimowa Kraina    (201-235) jelly multi-warstwa + chocolate, finezja
+/// 16 · Diamentowa Kopalnia (236-270) gęste obstacles, wszystkie typy mix
+/// 17 · Wieczność        (271-300) endgame absolutny, 4 cele + 12-14 ruchów
 ///
 /// ŚWIATY 8-14 (poziomy 101-200) — END GAME:
 ///  8 · Podwodne Głębiny  (101-115) jelly + ice mix, 5 kolorów
@@ -29,14 +34,14 @@ void main(List<String> args) {
   final outDir = Directory('assets/data/levels');
   outDir.createSync(recursive: true);
   final rng = Random(42); // deterministic seed → reproducible levels
-  for (var id = 1; id <= 200; id++) {
+  for (var id = 1; id <= 300; id++) {
     final level = _generateLevel(id, rng);
     final filename =
         'assets/data/levels/level_${id.toString().padLeft(3, '0')}.json';
     File(filename).writeAsStringSync(
         const JsonEncoder.withIndent('  ').convert(level));
   }
-  stdout.writeln('Wygenerowano 200 poziomów do ${outDir.path}/');
+  stdout.writeln('Wygenerowano 300 poziomów do ${outDir.path}/');
 }
 
 Map<String, dynamic> _generateLevel(int id, Random rng) {
@@ -78,7 +83,10 @@ int _worldForLevel(int id) {
   if (id <= 160) return 11;
   if (id <= 175) return 12;
   if (id <= 190) return 13;
-  return 14;
+  if (id <= 200) return 14;
+  if (id <= 235) return 15;
+  if (id <= 270) return 16;
+  return 17;
 }
 
 int _movesForLevel(int id, int world) {
@@ -97,7 +105,10 @@ int _movesForLevel(int id, int world) {
     11 => 17,
     12 => 16,
     13 => 16,
-    _ => 15, // 14 (Pradawne Ruiny)
+    14 => 15,
+    15 => 17,
+    16 => 16,
+    _ => 14, // 17 (Wieczność)
   };
   final positionInWorld = id - _firstIdOfWorld(world);
   final difficultyOffset = -(positionInWorld ~/ 4);
@@ -114,7 +125,10 @@ int _firstIdOfWorld(int world) {
 
 int _worldLevelCount(int world) {
   // Świat 7 i 14 to "bossowe" z 10 poziomami; reszta po 15.
+  // Świat 15, 16 — 35 poziomów (rozszerzenie). 17 — 30 (final endgame).
   if (world == 7 || world == 14) return 10;
+  if (world == 15 || world == 16) return 35;
+  if (world == 17) return 30;
   return 15;
 }
 
@@ -124,6 +138,9 @@ List<String> _colorsForLevel(int world) {
   if (world == 8) return _named([0, 1, 2, 3, 4]); // 5 kolorów — podwodne
   if (world == 12) return _named([0, 2, 4, 5]); // 4 kolory — smoczy tron
   if (world == 14) return _named([0, 1, 2, 3, 4]); // 5 kolorów — finał
+  if (world == 15) return _named([1, 2, 3, 4, 5]); // 5 — bez czerwieni (zima)
+  if (world == 16) return _named([0, 1, 2, 3, 4, 5]); // 6 — diamentowa kopalnia
+  if (world == 17) return _named([0, 1, 3, 5]); // 4 — wieczność, najtrudniej
   return _named([0, 1, 2, 3, 4, 5]); // 6 kolorów
 }
 
@@ -242,6 +259,41 @@ List<String> _generateLayout(int rows, int cols, int world, int id, Random rng) 
             ch = 'J';
           }
           break;
+        case 15: // Zimowa Kraina: ice + jelly 2-warstwa, finezja
+          final roll = rng.nextDouble();
+          if (roll < 0.25 + density) {
+            ch = 'K';
+          } else if (roll < 0.45 + density) {
+            ch = 'I';
+          }
+          break;
+        case 16: // Diamentowa Kopalnia: ALL obstacles, bardzo gęsto
+          final roll = rng.nextDouble();
+          if (roll < 0.18) {
+            ch = 'K';
+          } else if (roll < 0.32) {
+            ch = 'C';
+          } else if (roll < 0.42) {
+            ch = 'I';
+          } else if (roll < 0.48) {
+            ch = 'X';
+          } else if (roll < 0.60) {
+            ch = 'J';
+          }
+          break;
+        case 17: // Wieczność: bossowe endgame, krzyżowa symetria
+          final dx = (c - cols ~/ 2).abs();
+          final dy = (r - rows ~/ 2).abs();
+          if (dx <= 1 && dy <= 1) {
+            // środek otwarty
+          } else if ((dx + dy) % 2 == 0 && rng.nextDouble() < 0.6) {
+            ch = 'K';
+          } else if (rng.nextDouble() < 0.3) {
+            ch = 'C';
+          } else if (rng.nextDouble() < 0.25) {
+            ch = 'I';
+          }
+          break;
       }
       buf.write(ch);
     }
@@ -268,7 +320,10 @@ List<Map<String, dynamic>> _generateGoals(
     11 => 155000,
     12 => 180000,
     13 => 195000,
-    _ => 220000, // 14
+    14 => 220000,
+    15 => 240000,
+    16 => 280000,
+    _ => 350000, // 17 wieczność
   };
   final scoreTarget = baseScore + positionInWorld * 500;
 
@@ -360,6 +415,41 @@ List<Map<String, dynamic>> _generateGoals(
       goals.add({
         'type': 'collectIngredients',
         'target': 3 + positionInWorld,
+      });
+      break;
+    case 15:
+      // Zimowa Kraina — jelly 2-layer + lód
+      final k = _countChar(layout, 'K');
+      final i = _countChar(layout, 'I');
+      if (k > 0) goals.add({'type': 'clearJelly', 'target': k});
+      if (i > 0) goals.add({'type': 'clearObstacles', 'target': i});
+      break;
+    case 16:
+      // Diamentowa Kopalnia — wszystkie obstacles
+      final allObstacles = _countChar(layout, 'K') +
+          _countChar(layout, 'I') +
+          _countChar(layout, 'C') +
+          _countChar(layout, 'J');
+      if (allObstacles > 0) {
+        goals.add({'type': 'clearObstacles', 'target': allObstacles ~/ 2});
+      }
+      goals.add({
+        'type': 'collectIngredients',
+        'target': 4 + positionInWorld ~/ 3,
+      });
+      break;
+    case 17:
+      // Wieczność — 4 cele jednocześnie, brutalne
+      final jelly = _countChar(layout, 'K') + _countChar(layout, 'J');
+      final obstacles =
+          _countChar(layout, 'I') + _countChar(layout, 'C');
+      if (jelly > 0) goals.add({'type': 'clearJelly', 'target': jelly});
+      if (obstacles > 0) {
+        goals.add({'type': 'clearObstacles', 'target': obstacles});
+      }
+      goals.add({
+        'type': 'collectIngredients',
+        'target': 5 + positionInWorld ~/ 2,
       });
       break;
   }

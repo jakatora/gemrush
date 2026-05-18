@@ -28,7 +28,7 @@ class LevelRepository {
   }
 }
 
-/// 14 światów × 15 (lub 10 dla bossowych 7 i 14) = 200.
+/// 17 światów = 200 (oryginalne, 14 światów) + 100 (rozszerzenie, 3 światy)
 const Map<int, int> worldRanges = {
   1: 15,  // 1-15
   2: 15,  // 16-30
@@ -44,6 +44,9 @@ const Map<int, int> worldRanges = {
   12: 15, // 161-175
   13: 15, // 176-190
   14: 10, // 191-200
+  15: 35, // 201-235 — Zimowa Kraina
+  16: 35, // 236-270 — Diamentowa Kopalnia
+  17: 30, // 271-300 — Wieczność
 };
 
 int worldForLevel(int levelId) {
@@ -55,4 +58,4 @@ int worldForLevel(int levelId) {
   return worldRanges.length;
 }
 
-const int totalLevels = 200;
+const int totalLevels = 300;
