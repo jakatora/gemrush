@@ -9,32 +9,39 @@ class BoosterBar extends ConsumerWidget {
     super.key,
     required this.onHintTap,
     required this.onShuffleTap,
+    required this.onExtraMovesTap,
     required this.busy,
   });
 
   final Future<void> Function() onHintTap;
   final Future<void> Function() onShuffleTap;
+  final Future<void> Function() onExtraMovesTap;
   final bool busy;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ads = ref.read(adsServiceProvider);
     final hintReady = ads.isRewardedReady('hint');
+    final extraMovesReady = ads.isRewardedReady('extra_moves');
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _BoosterButton(
             icon: Icons.lightbulb,
-            label: hintReady ? 'Podpowiedź\n(reklama)' : 'Podpowiedź\n50 monet',
+            label: hintReady ? 'Hint\nreklama' : 'Hint\n50 ☆',
             onTap: busy ? null : onHintTap,
           ),
-          const SizedBox(width: 12),
           _BoosterButton(
             icon: Icons.shuffle,
-            label: 'Tasuj\n75 monet',
+            label: 'Tasuj\n75 ☆',
             onTap: busy ? null : onShuffleTap,
+          ),
+          _BoosterButton(
+            icon: Icons.add_circle,
+            label: extraMovesReady ? '+5 ruch\nreklama' : '+5 ruch\n200 ☆',
+            onTap: busy ? null : onExtraMovesTap,
           ),
         ],
       ),
@@ -52,25 +59,34 @@ class _BoosterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap == null ? null : () => onTap!(),
-        child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppColors.accent, size: 22),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.onSurface, fontSize: 11),
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: onTap == null ? null : () => onTap!(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 6, vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: AppColors.accent, size: 22),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.onSurface,
+                      fontSize: 10,
+                      height: 1.1,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

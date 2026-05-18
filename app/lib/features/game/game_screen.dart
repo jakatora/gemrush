@@ -387,13 +387,44 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
     ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
     await _game?.useShuffle();
-    // Quest + stats — uzycie tasowania.
+    await _logBoosterAndShuffle();
+  }
+
+  Future<void> _logBoosterAndShuffle() async {
     await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
         questId: 'shuffle_1');
     await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
         questId: 'booster_use');
     await ref.read(statsRepoProvider).recordBoosterUsed();
     await ref.read(statsRepoProvider).recordCoinsSpent(75);
+  }
+
+  Future<void> _onExtraMovesTap() async {
+    final ads = ref.read(adsServiceProvider);
+    final profileRepo = ref.read(profileRepoProvider);
+    if (ads.isRewardedReady('extra_moves')) {
+      final res = await ads.showRewarded('extra_moves');
+      if (res.rewarded) {
+        _game?.grantExtraMoves(5);
+        await ref.read(statsRepoProvider).recordBoosterUsed();
+      }
+      return;
+    }
+    final ok = await profileRepo.spendCoins(200);
+    if (!ok) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Za mało monet')),
+        );
+      }
+      return;
+    }
+    ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
+    _game?.grantExtraMoves(5);
+    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
+        questId: 'booster_use');
+    await ref.read(statsRepoProvider).recordBoosterUsed();
+    await ref.read(statsRepoProvider).recordCoinsSpent(200);
   }
 
   void _pauseMenu() {
@@ -489,6 +520,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                     busy: _game?.busy ?? false,
                     onHintTap: _onHintTap,
                     onShuffleTap: _onShuffleTap,
+                    onExtraMovesTap: _onExtraMovesTap,
                   ),
                 ],
               ),
