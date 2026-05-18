@@ -194,6 +194,25 @@ class _GameScreenState extends ConsumerState<GameScreen>
       await dailyChallengeRepo.markCompleted(DateTime.now());
     }
 
+    // Quest events — recordEvent inkrementuje wszystkie matching questy.
+    final quests = ref.read(questsRepoProvider);
+    final now = DateTime.now();
+    await quests.recordEvent(now, questId: 'win_3');
+    await quests.recordEvent(now, questId: 'win_5');
+    await quests.recordEvent(now, questId: 'win_no_boost',
+        delta: _openingBoosters.isEmpty ? 1 : 0);
+    await quests.recordEvent(now, questId: 'star_5', delta: snap.stars);
+    await quests.recordEvent(now, questId: 'coins_100', delta: coinsEarned);
+    if ((_game?.maxCascadeReached ?? 0) >= 3) {
+      await quests.recordEvent(now, questId: 'cascade_3');
+    }
+    if ((_game?.maxCascadeReached ?? 0) >= 4) {
+      await quests.recordEvent(now, questId: 'combo_4');
+    }
+    if (snap.score >= 50000) {
+      await quests.recordEvent(now, questId: 'score_50k', delta: snap.score);
+    }
+
     // Stats + Achievements
     final stats = ref.read(statsRepoProvider);
     final achievements = ref.read(achievementsRepoProvider);

@@ -11,6 +11,7 @@ import '../data/repositories/daily_challenge_repository.dart';
 import '../data/repositories/daily_repository.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/progress_repository.dart';
+import '../data/repositories/quests_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/stats_repository.dart';
 
@@ -32,6 +33,7 @@ final achievementsRepoProvider =
 final statsRepoProvider = Provider<StatsRepository>((_) => StatsRepository());
 final dailyChallengeRepoProvider =
     Provider<DailyChallengeRepository>((_) => DailyChallengeRepository());
+final questsRepoProvider = Provider<QuestsRepository>((_) => QuestsRepository());
 
 final adsServiceProvider = Provider<AdsService>((ref) {
   final analytics = ref.read(analyticsProvider);

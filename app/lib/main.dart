@@ -14,6 +14,7 @@ import 'data/models/daily_state.dart';
 import 'data/models/game_stats.dart';
 import 'data/models/level_progress.dart';
 import 'data/models/profile.dart';
+import 'data/models/quest.dart';
 import 'providers/app_providers.dart';
 
 Future<void> main() async {
@@ -28,6 +29,8 @@ Future<void> main() async {
   Hive.registerAdapter(AchievementProgressAdapter());
   Hive.registerAdapter(GameStatsAdapter());
   Hive.registerAdapter(DailyChallengeAdapter());
+  Hive.registerAdapter(QuestSetAdapter());
+  Hive.registerAdapter(QuestAdapter());
 
   final container = ProviderContainer();
 
@@ -40,6 +43,7 @@ Future<void> main() async {
   await container.read(achievementsRepoProvider).init();
   await container.read(statsRepoProvider).init();
   await container.read(dailyChallengeRepoProvider).init();
+  await container.read(questsRepoProvider).init();
   await container.read(audioProvider).init();
 
   final settings = container.read(settingsRepoProvider).current;

@@ -87,6 +87,11 @@ class MenuScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.achievements),
                     ),
                     _IconButton(
+                      icon: Icons.flag,
+                      label: 'Wyzwania',
+                      onTap: () => context.push(Routes.quests),
+                    ),
+                    _IconButton(
                       icon: Icons.bar_chart,
                       label: 'Statystyki',
                       onTap: () => context.push(Routes.stats),
