@@ -6,6 +6,9 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/iap_service.dart';
 import '../../providers/app_providers.dart';
 
+/// Badge typu na karcie sklepowej.
+enum _Badge { none, popular, bestValue, limited }
+
 class ShopScreen extends ConsumerWidget {
   const ShopScreen({super.key});
 
@@ -21,22 +24,57 @@ class ShopScreen extends ConsumerWidget {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _SectionHeader('Wyłącz reklamy'),
-                _IapCard(product: products[IapProducts.removeAds], ref: ref),
+                const _SectionHeader('Wyłącz reklamy'),
+                _IapCard(
+                  product: products[IapProducts.removeAds],
+                  ref: ref,
+                  badge: _Badge.popular,
+                  description: 'Bez przerw między poziomami. Reward ads zostają.',
+                ),
+                const SizedBox(height: 16),
+                const _SectionHeader('Monety'),
+                _IapCard(
+                  product: products[IapProducts.coins100],
+                  ref: ref,
+                  description: '+100 monet',
+                ),
+                _IapCard(
+                  product: products[IapProducts.coins500],
+                  ref: ref,
+                  badge: _Badge.popular,
+                  description: '+600 monet (20% bonus)',
+                ),
+                _IapCard(
+                  product: products[IapProducts.coins1200],
+                  ref: ref,
+                  badge: _Badge.bestValue,
+                  description: '+1600 monet (33% bonus)',
+                ),
+                _IapCard(
+                  product: products[IapProducts.coins3000],
+                  ref: ref,
+                  description: '+4500 monet (50% bonus)',
+                ),
+                const SizedBox(height: 16),
+                const _SectionHeader('Pakiety'),
+                _IapCard(
+                  product: products[IapProducts.starterPack],
+                  ref: ref,
+                  badge: _Badge.limited,
+                  description: '200 monet + 10 żyć + 3 boostery',
+                ),
+                _IapCard(
+                  product: products[IapProducts.weekendPack],
+                  ref: ref,
+                  badge: _Badge.limited,
+                  description: '500 monet + unlim. życia 24h',
+                ),
+                _IapCard(
+                  product: products[IapProducts.unlimitedLives24h],
+                  ref: ref,
+                  description: '24h bez limitu żyć',
+                ),
                 const SizedBox(height: 24),
-                _SectionHeader('Monety'),
-                for (final id in [
-                  IapProducts.coins100,
-                  IapProducts.coins500,
-                  IapProducts.coins1200,
-                  IapProducts.coins3000,
-                ])
-                  _IapCard(product: products[id], ref: ref),
-                const SizedBox(height: 24),
-                _SectionHeader('Pakiety'),
-                _IapCard(product: products[IapProducts.starterPack], ref: ref),
-                _IapCard(product: products[IapProducts.weekendPack], ref: ref),
-                _IapCard(product: products[IapProducts.unlimitedLives24h], ref: ref),
               ],
             ),
     );
@@ -52,11 +90,12 @@ class _SectionHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
-        label,
+        label.toUpperCase(),
         style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: AppColors.onSurface,
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: AppColors.accent,
+          letterSpacing: 1.5,
         ),
       ),
     );
@@ -64,9 +103,17 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _IapCard extends StatelessWidget {
-  const _IapCard({required this.product, required this.ref});
+  const _IapCard({
+    required this.product,
+    required this.ref,
+    this.badge = _Badge.none,
+    this.description,
+  });
+
   final ProductDetails? product;
   final WidgetRef ref;
+  final _Badge badge;
+  final String? description;
 
   @override
   Widget build(BuildContext context) {
@@ -81,19 +128,86 @@ class _IapCard extends StatelessWidget {
       );
     }
     final coins = IapProducts.coinsFor(product!.id);
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        leading: const Icon(Icons.shopping_bag, color: AppColors.accent),
-        title: Text(product!.title.isEmpty ? product!.id : product!.title),
-        subtitle: Text(coins > 0
-            ? '+$coins monet — ${product!.description}'
-            : product!.description),
-        trailing: ElevatedButton(
-          onPressed: () => ref.read(iapServiceProvider).buy(product!.id),
-          child: Text(product!.price),
+    final isHighlight = badge == _Badge.bestValue || badge == _Badge.popular;
+
+    return Stack(
+      children: [
+        Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          color: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: isHighlight
+                ? BorderSide(
+                    color: badge == _Badge.bestValue
+                        ? AppColors.success
+                        : AppColors.accent,
+                    width: 2,
+                  )
+                : BorderSide.none,
+          ),
+          child: ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                coins > 0 ? Icons.monetization_on : Icons.shopping_bag,
+                color: AppColors.accent,
+              ),
+            ),
+            title: Text(
+              product!.title.isEmpty ? product!.id : product!.title,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              description ?? product!.description,
+              style: const TextStyle(fontSize: 12),
+            ),
+            trailing: ElevatedButton(
+              onPressed: () => ref.read(iapServiceProvider).buy(product!.id),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: badge == _Badge.bestValue
+                    ? AppColors.success
+                    : null,
+              ),
+              child: Text(product!.price),
+            ),
+          ),
+        ),
+        if (badge != _Badge.none) _badgeWidget(),
+      ],
+    );
+  }
+
+  Widget _badgeWidget() {
+    final (label, color) = switch (badge) {
+      _Badge.popular => ('POPULARNY', AppColors.accent),
+      _Badge.bestValue => ('NAJLEPSZA WARTOŚĆ', AppColors.success),
+      _Badge.limited => ('LIMITOWANY', AppColors.danger),
+      _Badge.none => ('', AppColors.primary),
+    };
+    return Positioned(
+      top: 0,
+      right: 16,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(8),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );

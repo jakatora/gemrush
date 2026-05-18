@@ -8,11 +8,77 @@ import '../../data/repositories/level_repository.dart';
 import '../../providers/app_providers.dart';
 import '../game/world_theme.dart';
 
-class MapScreen extends ConsumerWidget {
+class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends ConsumerState<MapScreen> {
+  final _scrollCtrl = ScrollController();
+  final _worldKeys = <int, GlobalKey>{};
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _jumpToWorld(int worldId) {
+    final key = _worldKeys[worldId];
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _showWorldMenu(BuildContext context, int unlocked) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final unlockedWorld = worldForLevel(unlocked);
+        return SafeArea(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: worldRanges.length,
+            itemBuilder: (_, idx) {
+              final worldId = idx + 1;
+              final theme = WorldTheme.forWorld(worldId);
+              final reached = worldId <= unlockedWorld;
+              return ListTile(
+                leading: Icon(theme.icon,
+                    color: reached ? theme.accent : AppColors.muted),
+                title: Text('Świat $worldId · ${theme.name}',
+                    style: TextStyle(
+                      color: reached ? AppColors.onSurface : AppColors.muted,
+                    )),
+                trailing: reached
+                    ? const Icon(Icons.arrow_forward_ios, size: 16)
+                    : const Icon(Icons.lock, size: 16, color: AppColors.muted),
+                onTap: reached
+                    ? () {
+                        Navigator.pop(ctx);
+                        _jumpToWorld(worldId);
+                      }
+                    : null,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final progressRepo = ref.watch(progressRepoProvider);
 
     return Scaffold(
@@ -20,6 +86,14 @@ class MapScreen extends ConsumerWidget {
         title: const Text('Mapa świata'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list),
+            tooltip: 'Przeskocz do świata',
+            onPressed: () =>
+                _showWorldMenu(context, progressRepo.highestUnlocked),
+          ),
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: Container(
@@ -37,15 +111,21 @@ class MapScreen extends ConsumerWidget {
             builder: (context, _, _) {
               final unlocked = progressRepo.highestUnlocked;
               return ListView.builder(
+                controller: _scrollCtrl,
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 itemCount: worldRanges.length,
                 itemBuilder: (context, idx) {
                   final worldIdx = idx + 1;
-                  return _WorldSection(
-                    worldId: worldIdx,
-                    unlocked: unlocked,
-                    onTap: (lvl) => context.push(Routes.gameWithLevel(lvl)),
-                    stars: (lvl) => progressRepo.getLevel(lvl)?.stars ?? 0,
+                  final key =
+                      _worldKeys.putIfAbsent(worldIdx, () => GlobalKey());
+                  return KeyedSubtree(
+                    key: key,
+                    child: _WorldSection(
+                      worldId: worldIdx,
+                      unlocked: unlocked,
+                      onTap: (lvl) => context.push(Routes.gameWithLevel(lvl)),
+                      stars: (lvl) => progressRepo.getLevel(lvl)?.stars ?? 0,
+                    ),
                   );
                 },
               );
