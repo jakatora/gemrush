@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/app_settings.dart';
@@ -16,6 +17,8 @@ class SettingsRepository {
   }
 
   AppSettings get current => _box.get(_key)!;
+
+  ValueListenable<Box<AppSettings>> listenable() => _box.listenable();
 
   Future<void> setSound(bool v) async {
     current.soundEnabled = v;
