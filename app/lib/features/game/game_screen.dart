@@ -9,6 +9,7 @@ import '../../providers/app_providers.dart';
 import 'flame_components/gem_rush_game.dart';
 import 'models/booster.dart';
 import 'models/level_data.dart';
+import 'world_theme.dart';
 import 'widgets/booster_bar.dart';
 import 'widgets/hud.dart';
 import 'widgets/pause_dialog.dart';
@@ -356,9 +357,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
         body: Center(child: CircularProgressIndicator()),
       );
     }
+    final theme = WorldTheme.forLevel(widget.levelId);
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0B2C),
-      body: SafeArea(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.gradient.first,
+              const Color(0xFF0E0B2C),
+            ],
+          ),
+        ),
+        child: SafeArea(
         child: Stack(
           children: [
             Positioned.fill(
@@ -416,6 +428,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
               ),
           ],
         ),
+      ),
       ),
     );
   }

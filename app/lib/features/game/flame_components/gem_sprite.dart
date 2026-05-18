@@ -50,51 +50,94 @@ class GemSprite extends PositionComponent {
     final radius = cellSize * 0.42;
     final center = Offset(cellSize / 2, cellSize / 2);
 
-    // Cień
+    // 1. Cień (głębszy, z większym blur)
     final shadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.45)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    canvas.drawCircle(center.translate(0, 4), radius, shadow);
+      ..color = Colors.black.withValues(alpha: 0.55)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+    canvas.drawCircle(center.translate(0, 5), radius, shadow);
 
-    // Główne wypełnienie — radial gradient z 3 stopniami głębi
+    // 2. Outer glow w kolorze gemu (subtle aura)
+    final glow = Paint()
+      ..color = _color.withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(center, radius * 1.05, glow);
+
+    // 3. Główne wypełnienie — radial gradient 4 stopnie głębi
     final base = Paint()
       ..shader = RadialGradient(
-        center: const Alignment(-0.3, -0.3),
+        center: const Alignment(-0.35, -0.4),
         colors: [
-          Color.lerp(_color, Colors.white, 0.35)!,
-          _color.withValues(alpha: 0.95),
-          Color.lerp(_color, Colors.black, 0.55)!,
+          Color.lerp(_color, Colors.white, 0.55)!,
+          Color.lerp(_color, Colors.white, 0.15)!,
+          _color,
+          Color.lerp(_color, Colors.black, 0.6)!,
         ],
-        stops: const [0.0, 0.45, 1.0],
+        stops: const [0.0, 0.3, 0.7, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, base);
 
-    // Ciemny outline + jasny inner ring
+    // 4. Internal facet — diamentowa fasetka (cienka linia + jasny shade)
+    final facetPath = Path()
+      ..moveTo(center.dx, center.dy - radius * 0.6)
+      ..lineTo(center.dx + radius * 0.4, center.dy - radius * 0.1)
+      ..lineTo(center.dx - radius * 0.4, center.dy - radius * 0.1)
+      ..close();
+    canvas.drawPath(
+      facetPath,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.18)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawPath(
+      facetPath,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+
+    // 5. Ciemny outline (gradient od ciemnego u góry do jaśniejszego u dołu)
     final outline = Paint()
-      ..color = Color.lerp(_color, Colors.black, 0.65)!.withValues(alpha: 0.8)
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.lerp(_color, Colors.black, 0.75)!,
+          Color.lerp(_color, Colors.black, 0.4)!,
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawCircle(center, radius, outline);
 
+    // 6. Inner ring (subtle)
     final innerRing = Paint()
-      ..color = Colors.white.withValues(alpha: 0.2)
+      ..color = Colors.white.withValues(alpha: 0.18)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
-    canvas.drawCircle(center, radius * 0.85, innerRing);
+    canvas.drawCircle(center, radius * 0.82, innerRing);
 
-    // Połysk główny (lewa górna)
+    // 7. Główny highlight — większy + bardziej wyrazisty
     final highlight = Paint()
-      ..color = Colors.white.withValues(alpha: 0.65)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
+      ..color = Colors.white.withValues(alpha: 0.75)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
     canvas.drawCircle(
-        center.translate(-radius * 0.4, -radius * 0.4),
-        radius * 0.22,
-        highlight);
-    // Mały drugi rozbłysk
+      center.translate(-radius * 0.42, -radius * 0.42),
+      radius * 0.24,
+      highlight,
+    );
+    // 8. Mały rozbłysk
     canvas.drawCircle(
-        center.translate(-radius * 0.55, -radius * 0.15),
-        radius * 0.08,
-        Paint()..color = Colors.white.withValues(alpha: 0.5));
+      center.translate(-radius * 0.58, -radius * 0.12),
+      radius * 0.09,
+      Paint()..color = Colors.white.withValues(alpha: 0.65),
+    );
+    // 9. Mikro-iskra w prawym dolnym
+    canvas.drawCircle(
+      center.translate(radius * 0.35, radius * 0.35),
+      radius * 0.05,
+      Paint()..color = Colors.white.withValues(alpha: 0.3),
+    );
 
     _renderShapeOverlay(canvas, center, radius);
     _renderKindOverlay(canvas, center, radius);
