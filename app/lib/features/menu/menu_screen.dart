@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/routes.dart';
 import '../../providers/app_providers.dart';
+import 'widgets/animated_counter.dart';
 import 'widgets/daily_challenge_card.dart';
 import 'widgets/daily_reward_card.dart';
 import 'widgets/lives_meter.dart';
@@ -34,11 +35,7 @@ class MenuScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const LivesMeter(),
-                    _Badge(
-                      icon: Icons.monetization_on,
-                      color: AppColors.accent,
-                      label: '$coins',
-                    ),
+                    _CoinBadge(coins: coins),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -109,12 +106,9 @@ class MenuScreen extends ConsumerWidget {
   }
 }
 
-class _Badge extends StatelessWidget {
-  const _Badge({required this.icon, required this.color, required this.label});
-
-  final IconData icon;
-  final Color color;
-  final String label;
+class _CoinBadge extends StatelessWidget {
+  const _CoinBadge({required this.coins});
+  final int coins;
 
   @override
   Widget build(BuildContext context) {
@@ -123,19 +117,29 @@ class _Badge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.6), width: 1.5),
+        border: Border.all(
+            color: AppColors.accent.withValues(alpha: 0.6), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.2),
+            blurRadius: 6,
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 22),
+          const Icon(Icons.monetization_on,
+              color: AppColors.accent, size: 22),
           const SizedBox(width: 8),
-          Text(label,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
-              )),
+          AnimatedCounter(
+            value: coins,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurface,
+            ),
+          ),
         ],
       ),
     );
