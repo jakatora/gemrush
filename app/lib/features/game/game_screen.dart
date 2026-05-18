@@ -147,8 +147,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
       _level!.moves - snap.movesLeft,
     );
 
-    final coinsEarned =
-        10 + (snap.stars > 1 ? 5 : 0) + (snap.stars > 2 ? 10 : 0);
+    // Bonus dla dzisiejszego daily challenge.
+    final dailyChallengeRepo = ref.read(dailyChallengeRepoProvider);
+    final isDailyChallenge =
+        dailyChallengeRepo.isDailyChallenge(widget.levelId, DateTime.now());
+    final dailyBonus = isDailyChallenge
+        ? dailyChallengeRepo
+            .ensureForToday(DateTime.now(), progressRepo.highestUnlocked)
+            .bonusCoins
+        : 0;
+
+    final coinsEarned = 10 +
+        (snap.stars > 1 ? 5 : 0) +
+        (snap.stars > 2 ? 10 : 0) +
+        dailyBonus;
     await profileRepo.addCoins(coinsEarned);
     ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
     await progressRepo.recordResult(
@@ -157,6 +169,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
       score: snap.score,
       won: true,
     );
+    if (isDailyChallenge) {
+      await dailyChallengeRepo.markCompleted(DateTime.now());
+    }
 
     // Stats + Achievements
     final stats = ref.read(statsRepoProvider);

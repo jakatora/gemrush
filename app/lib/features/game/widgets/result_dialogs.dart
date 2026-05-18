@@ -27,11 +27,22 @@ class WinDialog extends ConsumerStatefulWidget {
 class _WinDialogState extends ConsumerState<WinDialog>
     with TickerProviderStateMixin {
   int _starsVisible = 0;
+  late final AnimationController _entrance;
 
   @override
   void initState() {
     super.initState();
+    _entrance = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    )..forward();
     _animateStarsSequence();
+  }
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    super.dispose();
   }
 
   Future<void> _animateStarsSequence() async {
@@ -47,7 +58,9 @@ class _WinDialogState extends ConsumerState<WinDialog>
     final ads = ref.read(adsServiceProvider);
     final rewardedReady = ads.isRewardedReady('double_coins');
 
-    return Dialog(
+    return ScaleTransition(
+      scale: CurvedAnimation(parent: _entrance, curve: Curves.easeOutBack),
+      child: Dialog(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
@@ -122,11 +135,12 @@ class _WinDialogState extends ConsumerState<WinDialog>
           ],
         ),
       ),
+      ),
     );
   }
 }
 
-class LoseDialog extends ConsumerWidget {
+class LoseDialog extends ConsumerStatefulWidget {
   const LoseDialog({
     super.key,
     required this.onRetry,
@@ -139,58 +153,105 @@ class LoseDialog extends ConsumerWidget {
   final Future<bool> Function() onExtraMovesRewarded;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LoseDialog> createState() => _LoseDialogState();
+}
+
+class _LoseDialogState extends ConsumerState<LoseDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    )..forward();
+    _scale = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ads = ref.read(adsServiceProvider);
     final ready = ads.isRewardedReady('extra_moves');
 
-    return Dialog(
-      backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.sentiment_dissatisfied,
-                size: 64, color: AppColors.danger),
-            const SizedBox(height: 16),
-            const Text('Zabrakło ruchów',
-                style: TextStyle(
-                  fontSize: 22,
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w700,
-                )),
-            const SizedBox(height: 20),
-            if (ready)
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final ok = await onExtraMovesRewarded();
-                  if (ok && context.mounted) Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.play_circle),
-                label: const Text('+5 ruchów (reklama)'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
+    return ScaleTransition(
+      scale: _scale,
+      child: Dialog(
+        backgroundColor: AppColors.surface,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Smutna ikona z subtelnym puls effectem
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.9, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeInOut,
+                builder: (_, v, child) =>
+                    Transform.scale(scale: v, child: child),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.danger.withValues(alpha: 0.18),
+                    border: Border.all(
+                        color: AppColors.danger.withValues(alpha: 0.5),
+                        width: 2),
+                  ),
+                  child: const Icon(Icons.sentiment_dissatisfied,
+                      size: 64, color: AppColors.danger),
                 ),
               ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onRetry();
-              },
-              child: const Text('Spróbuj ponownie'),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onClose();
-              },
-              child: const Text('Wyjdź',
-                  style: TextStyle(color: AppColors.muted)),
-            ),
-          ],
+              const SizedBox(height: 16),
+              const Text('Zabrakło ruchów',
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.w700,
+                  )),
+              const SizedBox(height: 20),
+              if (ready)
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final ok = await widget.onExtraMovesRewarded();
+                    if (ok && context.mounted) Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.play_circle),
+                  label: const Text('+5 ruchów (reklama)'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                  ),
+                ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onRetry();
+                },
+                child: const Text('Spróbuj ponownie'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onClose();
+                },
+                child: const Text('Wyjdź',
+                    style: TextStyle(color: AppColors.muted)),
+              ),
+            ],
+          ),
         ),
       ),
     );

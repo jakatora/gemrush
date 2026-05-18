@@ -9,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'app.dart';
 import 'data/models/achievement.dart';
 import 'data/models/app_settings.dart';
+import 'data/models/daily_challenge.dart';
 import 'data/models/daily_state.dart';
 import 'data/models/game_stats.dart';
 import 'data/models/level_progress.dart';
@@ -26,6 +27,7 @@ Future<void> main() async {
   Hive.registerAdapter(DailyStateAdapter());
   Hive.registerAdapter(AchievementProgressAdapter());
   Hive.registerAdapter(GameStatsAdapter());
+  Hive.registerAdapter(DailyChallengeAdapter());
 
   final container = ProviderContainer();
 
@@ -37,6 +39,7 @@ Future<void> main() async {
   await container.read(dailyRepoProvider).init();
   await container.read(achievementsRepoProvider).init();
   await container.read(statsRepoProvider).init();
+  await container.read(dailyChallengeRepoProvider).init();
   await container.read(audioProvider).init();
 
   final settings = container.read(settingsRepoProvider).current;

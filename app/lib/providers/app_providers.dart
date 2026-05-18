@@ -7,6 +7,7 @@ import '../core/services/consent_service.dart';
 import '../core/services/haptics_service.dart';
 import '../core/services/iap_service.dart';
 import '../data/repositories/achievements_repository.dart';
+import '../data/repositories/daily_challenge_repository.dart';
 import '../data/repositories/daily_repository.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/progress_repository.dart';
@@ -29,6 +30,8 @@ final dailyRepoProvider = Provider<DailyRepository>((_) => DailyRepository());
 final achievementsRepoProvider =
     Provider<AchievementsRepository>((_) => AchievementsRepository());
 final statsRepoProvider = Provider<StatsRepository>((_) => StatsRepository());
+final dailyChallengeRepoProvider =
+    Provider<DailyChallengeRepository>((_) => DailyChallengeRepository());
 
 final adsServiceProvider = Provider<AdsService>((ref) {
   final analytics = ref.read(analyticsProvider);
