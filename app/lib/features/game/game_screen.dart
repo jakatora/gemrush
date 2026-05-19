@@ -6,16 +6,17 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/routes.dart';
 import '../../data/repositories/level_repository.dart';
 import '../../providers/app_providers.dart';
+import 'booster_actions.dart';
 import 'flame_components/gem_rush_game.dart';
+import 'game_result_handler.dart';
 import 'models/booster.dart';
 import 'models/level_data.dart';
-import 'world_theme.dart';
 import 'widgets/booster_bar.dart';
 import 'widgets/hud.dart';
 import 'widgets/pause_dialog.dart';
 import 'widgets/pre_game_dialog.dart';
-import 'widgets/result_dialogs.dart';
 import 'widgets/tutorial_overlay.dart';
+import 'world_theme.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key, required this.levelId});
@@ -158,274 +159,37 @@ class _GameScreenState extends ConsumerState<GameScreen>
     });
   }
 
-  Future<void> _handleWin(GameSnapshot snap) async {
-    final analytics = ref.read(analyticsProvider);
-    final profileRepo = ref.read(profileRepoProvider);
-    final progressRepo = ref.read(progressRepoProvider);
-    final ads = ref.read(adsServiceProvider);
-
-    analytics.logLevelComplete(
-      widget.levelId,
-      snap.stars,
-      snap.score,
-      _level!.moves - snap.movesLeft,
-    );
-
-    // Bonus dla dzisiejszego daily challenge.
-    final dailyChallengeRepo = ref.read(dailyChallengeRepoProvider);
-    final isDailyChallenge =
-        dailyChallengeRepo.isDailyChallenge(widget.levelId, DateTime.now());
-    final dailyBonus = isDailyChallenge
-        ? dailyChallengeRepo
-            .ensureForToday(DateTime.now(), progressRepo.highestUnlocked)
-            .bonusCoins
-        : 0;
-
-    final coinsEarned = 10 +
-        (snap.stars > 1 ? 5 : 0) +
-        (snap.stars > 2 ? 10 : 0) +
-        dailyBonus;
-    await profileRepo.addCoins(coinsEarned);
-    ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
-    await progressRepo.recordResult(
-      levelId: widget.levelId,
-      stars: snap.stars,
-      score: snap.score,
-      won: true,
-    );
-    if (isDailyChallenge) {
-      await dailyChallengeRepo.markCompleted(DateTime.now());
-    }
-
-    // Quest events — recordEvent inkrementuje wszystkie matching questy.
-    final quests = ref.read(questsRepoProvider);
-    final now = DateTime.now();
-    await quests.recordEvent(now, questId: 'win_3');
-    await quests.recordEvent(now, questId: 'win_5');
-    await quests.recordEvent(now, questId: 'win_no_boost',
-        delta: _openingBoosters.isEmpty ? 1 : 0);
-    await quests.recordEvent(now, questId: 'star_5', delta: snap.stars);
-    await quests.recordEvent(now, questId: 'coins_100', delta: coinsEarned);
-    if ((_game?.maxCascadeReached ?? 0) >= 3) {
-      await quests.recordEvent(now, questId: 'cascade_3');
-    }
-    if ((_game?.maxCascadeReached ?? 0) >= 4) {
-      await quests.recordEvent(now, questId: 'combo_4');
-    }
-    if (snap.score >= 50000) {
-      await quests.recordEvent(now, questId: 'score_50k', delta: snap.score);
-    }
-
-    // Stats + Achievements
-    final stats = ref.read(statsRepoProvider);
-    final achievements = ref.read(achievementsRepoProvider);
-    await stats.recordGamePlayed(
-      won: true,
-      score: snap.score,
-      maxCascadeStep: _game?.maxCascadeReached ?? 0,
-    );
-    await stats.recordCoinsEarned(coinsEarned);
-    final updates = <(String, int)>[
-      ('first_blood', progressRepo.highestUnlocked),
-      ('rookie', progressRepo.highestUnlocked),
-      ('persistent', progressRepo.highestUnlocked),
-      ('master', progressRepo.highestUnlocked),
-      ('legend', progressRepo.highestUnlocked),
-      ('eternal', progressRepo.highestUnlocked),
-      ('star_hunter', progressRepo.totalStars),
-      ('star_master', progressRepo.totalStars),
-      ('star_perfectionist', progressRepo.totalStars),
-      ('star_legend', progressRepo.totalStars),
-      ('star_eternal', progressRepo.totalStars),
-      ('big_spender', stats.current.totalCoinsSpent),
-    ];
-    if ((_game?.maxCascadeReached ?? 0) >= 5) {
-      updates.add(('combo_kid', 1));
-    }
-    for (final (id, value) in updates) {
-      final res = await achievements.setProgress(id, value);
-      if (res.hasUnlocks) {
-        await profileRepo.addCoins(res.coinsEarned);
-        ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
-        for (final def in res.justUnlocked) {
-          if (!mounted) break;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  '🏆 ${def.name}! +${def.coinReward} monet'),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    }
-
-    if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => WinDialog(
-        score: snap.score,
-        stars: snap.stars,
-        coinsEarned: coinsEarned,
-        onContinue: () {},
-        onDoubleCoinsRewarded: () async {
-          final result = await ads.showRewarded('double_coins');
-          if (result.rewarded) {
-            await profileRepo.addCoins(coinsEarned);
-            ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
-            return true;
-          }
-          return false;
-        },
-      ),
-    );
-
-    await ads.maybeShowInterstitial(
-      currentLevel: widget.levelId,
-      placement: 'post_level_win',
-    );
-
-    if (mounted) context.pop();
-  }
-
-  Future<void> _handleLose(GameSnapshot snap) async {
-    final analytics = ref.read(analyticsProvider);
-    final profileRepo = ref.read(profileRepoProvider);
-    final progressRepo = ref.read(progressRepoProvider);
-    final ads = ref.read(adsServiceProvider);
-
-    analytics.logLevelFail(widget.levelId, snap.goalProgress);
-
-    profileRepo.current.lives =
-        (profileRepo.current.lives - 1).clamp(0, 5);
-    await profileRepo.save();
-    ref.read(livesProvider.notifier).state = profileRepo.current.lives;
-
-    await progressRepo.recordResult(
-      levelId: widget.levelId,
-      stars: 0,
-      score: snap.score,
-      won: false,
-    );
-
-    if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => LoseDialog(
+  GameResultHandler _resultHandler() => GameResultHandler(
+        ref: ref,
+        context: context,
+        levelId: widget.levelId,
+        level: _level!,
+        game: _game,
+        openingBoosters: _openingBoosters,
         onRetry: () {
           if (mounted) {
             setState(() => _game = null);
-            _preGameShown = true; // skip dialog na retry
+            _preGameShown = true;
             _loadLevel();
           }
         },
-        onClose: () {},
-        onExtraMovesRewarded: () async {
-          final res = await ads.showRewarded('extra_moves');
-          if (res.rewarded) {
-            _game?.grantExtraMoves(5);
-            return true;
-          }
-          return false;
-        },
-      ),
-    );
-
-    await ads.maybeShowInterstitial(
-      currentLevel: widget.levelId,
-      placement: 'post_level_lose',
-    );
-
-    if (mounted) context.pop();
-  }
-
-  Future<void> _onHintTap() async {
-    final ads = ref.read(adsServiceProvider);
-    final profileRepo = ref.read(profileRepoProvider);
-    if (ads.isRewardedReady('hint')) {
-      final res = await ads.showRewarded('hint');
-      if (!res.rewarded) return;
-    } else {
-      final ok = await profileRepo.spendCoins(50);
-      if (!ok) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Za mało monet')),
-          );
-        }
-        return;
-      }
-      ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
-    }
-    final found = _game?.useHint() ?? false;
-    // Quest + stats — uzycie podpowiedzi.
-    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
-        questId: 'hint_use');
-    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
-        questId: 'booster_use');
-    await ref.read(statsRepoProvider).recordBoosterUsed();
-    if (!found && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Brak dostępnych ruchów — tasuję')),
+        isMountedCheck: () => mounted,
       );
-      await _game?.useShuffle();
-    }
-  }
 
-  Future<void> _onShuffleTap() async {
-    final profileRepo = ref.read(profileRepoProvider);
-    final ok = await profileRepo.spendCoins(75);
-    if (!ok) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Za mało monet')),
-        );
-      }
-      return;
-    }
-    ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
-    await _game?.useShuffle();
-    await _logBoosterAndShuffle();
-  }
+  Future<void> _handleWin(GameSnapshot snap) => _resultHandler().handleWin(snap);
+  Future<void> _handleLose(GameSnapshot snap) =>
+      _resultHandler().handleLose(snap);
 
-  Future<void> _logBoosterAndShuffle() async {
-    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
-        questId: 'shuffle_1');
-    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
-        questId: 'booster_use');
-    await ref.read(statsRepoProvider).recordBoosterUsed();
-    await ref.read(statsRepoProvider).recordCoinsSpent(75);
-  }
+  BoosterActions _boosters() => BoosterActions(
+        ref: ref,
+        context: context,
+        game: _game,
+        isMountedCheck: () => mounted,
+      );
 
-  Future<void> _onExtraMovesTap() async {
-    final ads = ref.read(adsServiceProvider);
-    final profileRepo = ref.read(profileRepoProvider);
-    if (ads.isRewardedReady('extra_moves')) {
-      final res = await ads.showRewarded('extra_moves');
-      if (res.rewarded) {
-        _game?.grantExtraMoves(5);
-        await ref.read(statsRepoProvider).recordBoosterUsed();
-      }
-      return;
-    }
-    final ok = await profileRepo.spendCoins(200);
-    if (!ok) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Za mało monet')),
-        );
-      }
-      return;
-    }
-    ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
-    _game?.grantExtraMoves(5);
-    await ref.read(questsRepoProvider).recordEvent(DateTime.now(),
-        questId: 'booster_use');
-    await ref.read(statsRepoProvider).recordBoosterUsed();
-    await ref.read(statsRepoProvider).recordCoinsSpent(200);
-  }
+  Future<void> _onHintTap() => _boosters().hint();
+  Future<void> _onShuffleTap() => _boosters().shuffle();
+  Future<void> _onExtraMovesTap() => _boosters().extraMoves();
 
   void _pauseMenu() {
     if (_game != null) _game!.busy = true;
