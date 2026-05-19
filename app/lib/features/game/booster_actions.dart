@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/app_providers.dart';
 import 'flame_components/gem_rush_game.dart';
+import 'flame_components/gem_rush_game_boosters.dart';
 
 /// Booster tap handlers (hint, shuffle, +5 ruchów) wydzielone z GameScreen.
 class BoosterActions {

@@ -8,15 +8,22 @@ import '../game_logic/board.dart';
 import '../game_logic/cascade_engine.dart';
 import '../game_logic/gem.dart';
 import '../game_logic/goal_checker.dart';
-import '../game_logic/hint_finder.dart';
-import '../game_logic/match_finder.dart';
 import '../game_logic/score_engine.dart';
-import '../game_logic/special_gem_effects.dart';
 import '../models/booster.dart';
 import '../models/level_data.dart';
 import 'board_renderer.dart';
+import 'game_snapshot.dart';
+import 'gem_rush_game_swap.dart';
+
+export 'game_snapshot.dart';
 
 /// Główny komponent Flame: trzyma stan domeny + warstwę wizualną.
+///
+/// Splitowany na 4 pliki:
+///   - `gem_rush_game.dart` (ten plik) — lifecycle, layout, gestures, win/lose
+///   - `gem_rush_game_swap.dart` — extension `attemptSwap` (logika swap+cascade)
+///   - `gem_rush_game_boosters.dart` — extension `useHint/useShuffle/useHammerAt`
+///   - `game_snapshot.dart` — model snapshot przekazywany do UI
 class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   GemRushGame({
     required this.levelData,
@@ -27,16 +34,16 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     this.onHapticEvent,
   });
 
-  /// Optional callback for UI to map game events → haptics service.
-  /// Event names: 'swap', 'match3', 'match4', 'match_big', 'special',
-  /// 'cascade', 'win', 'lose'.
-  final void Function(String event)? onHapticEvent;
-
   final LevelData levelData;
   final Set<BoosterType> openingBoosters;
   final void Function(GameSnapshot) onUpdate;
   final void Function(GameSnapshot) onWin;
   final void Function(GameSnapshot) onLose;
+
+  /// Optional callback for UI to map game events → haptics service.
+  /// Event names: 'swap', 'match3', 'match4', 'match_big', 'special',
+  /// 'cascade', 'win', 'lose'.
+  final void Function(String event)? onHapticEvent;
 
   late Board board;
   // `goals` jest czytane przez GameHud w build() — czyli ZANIM async onLoad()
@@ -52,7 +59,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   int maxCascadeReached = 0;
 
   @override
-  Color backgroundColor() => const Color(0xFF2A1E70); // jasniejsze, lepiej widoczne
+  Color backgroundColor() => const Color(0xFF2A1E70);
 
   @override
   Future<void> onLoad() async {
@@ -75,7 +82,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     _applyOpeningBoosters();
 
     renderer.syncFromBoard(animate: false);
-    _emit();
+    emitUpdate();
   }
 
   void _applyOpeningBoosters() {
@@ -83,7 +90,6 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
       movesLeft += 5;
     }
     if (openingBoosters.contains(BoosterType.colorBombStart)) {
-      // Wstaw color bomb na środku, podmieniając istniejący gem.
       final center = Pos(board.rows ~/ 2, board.cols ~/ 2);
       final cell = board.cellAt(center);
       if (cell.isPlayable) {
@@ -96,69 +102,9 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     }
   }
 
-  // ============================================================
-  //  PUBLIC API — używane przez UI (booster bar, rewarded hint)
-  // ============================================================
-
-  /// Znajduje możliwy ruch i pokazuje highlight.
-  /// Zwraca true jeśli znaleziono, false jeśli trzeba shuffle.
-  bool useHint() {
-    final hint = HintFinder().findHint(board);
-    if (hint == null) return false;
-    renderer.flashHint(hint.a, hint.b);
-    return true;
-  }
-
-  /// Tasuje planszę aż znajdzie konfigurację z dostępnym ruchem.
-  Future<void> useShuffle() async {
-    busy = true;
-    board.shuffleUntilPlayable();
-    renderer.syncFromBoard(animate: true);
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    busy = false;
-  }
-
-  /// Rozbija pojedynczy klejnot na danej pozycji (booster Hammer).
-  Future<void> useHammerAt(Pos p) async {
-    if (busy) return;
-    if (!board.inBounds(p)) return;
-    final gem = board.gemAt(p);
-    if (gem == null) return;
-    busy = true;
-    board.setGem(p, null);
-    final gMoves = cascadeEngine.gravity.applyGravity(board);
-    final rMoves = cascadeEngine.gravity.refillTop(board);
-    renderer.syncFromBoard(animate: true);
-    await Future<void>.delayed(const Duration(milliseconds: 280));
-    // Następnie naturalna kaskada — jeśli powstały matche, rozwiąż.
-    final steps = cascadeEngine.processFullCascade(
-      board,
-      score: score,
-      goals: goals,
-    );
-    for (final s in steps) {
-      await renderer.animateCascadeStep(s);
-    }
-    busy = false;
-    _emit();
-    _checkWinLose();
-    // unused move maps — silencer
-    gMoves.length;
-    rMoves.length;
-  }
-
-  void _checkWinLose() {
-    if (goals.allGoalsMet) {
-      _onWin();
-    } else if (movesLeft <= 0) {
-      _onLose();
-    }
-  }
-
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    // Po pełnym załadowaniu i gdy mamy realny rozmiar — przelicz layout.
     if (size.x > 0 && size.y > 0 && isLoaded) {
       renderer.updateLayout(size);
     }
@@ -167,7 +113,6 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   @override
   void onMount() {
     super.onMount();
-    // Po mount Flame ma już ostateczny size; force-sync z aktualnym rozmiarem.
     if (size.x > 0 && size.y > 0) {
       renderer.updateLayout(size);
     }
@@ -195,8 +140,6 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
             cell.chocolate = true;
             break;
           case 'X':
-            cell.blocked = true;
-            break;
           case '.':
             cell.blocked = true;
             break;
@@ -208,7 +151,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   }
 
   // ============================================================
-  //  GESTURES
+  //  GESTURES — drag detection. Swap logic w GemRushGameSwap extension.
   // ============================================================
 
   Pos? _dragStart;
@@ -219,8 +162,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     super.onDragStart(event);
     if (busy) return;
     _dragHandled = false;
-    final pos = renderer.posFromGlobal(event.canvasPosition);
-    _dragStart = pos;
+    _dragStart = renderer.posFromGlobal(event.canvasPosition);
   }
 
   @override
@@ -241,7 +183,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     }
     _dragHandled = true;
     renderer.dragReset();
-    _attemptSwap(_dragStart!, target);
+    attemptSwap(_dragStart!, target); // extension method from gem_rush_game_swap.dart
   }
 
   @override
@@ -253,96 +195,18 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
   }
 
   // ============================================================
-  //  SWAP + KASKADA
+  //  WIN/LOSE/EMIT — wywoływane z extensions (swap, boosters)
   // ============================================================
 
-  Future<void> _attemptSwap(Pos a, Pos b) async {
-    if (busy) return;
-    if (!board.inBounds(a) || !board.inBounds(b)) return;
-    if (!a.isAdjacentTo(b)) return;
-    final ga = board.gemAt(a);
-    final gb = board.gemAt(b);
-    if (ga == null || gb == null) return;
-    onHapticEvent?.call('swap');
-    busy = true;
-    movesLeft -= 1;
-
-    // 1. Wstępna animacja swap
-    if (!board.swap(a, b)) {
-      busy = false;
-      return;
-    }
-    await renderer.animateSwap(a, b, duration: 0.15);
-
-    // 2. Sprawdź combo specjali / matche
-    Set<Pos> triggers = {};
-    final swappedA = board.gemAt(a);
-    final swappedB = board.gemAt(b);
-
-    final combo = SpecialGemEffects().resolveCombo(board, a, b);
-    if (!combo.isEmpty) {
-      for (final e in combo.transforms.entries) {
-        board.setGem(e.key, e.value);
-      }
-      triggers = {...combo.remove, ...combo.triggerAfterTransform};
-    } else {
-      // Jeśli któryś gem jest color bomb po swapie — od razu aktywuj
-      if (swappedA?.isColorBomb == true || swappedB?.isColorBomb == true) {
-        triggers = {a, b};
-      }
-    }
-
-    final matches = MatchFinder().findMatches(board);
-    if (matches.isEmpty && triggers.isEmpty) {
-      // Cofnij — niedopuszczalny ruch.
-      board.swap(a, b);
-      await renderer.animateSwap(a, b, duration: 0.2);
-      movesLeft += 1; // zwroć ruch
-      busy = false;
-      _emit();
-      return;
-    }
-
-    final steps = cascadeEngine.processFullCascade(
-      board,
-      score: score,
-      goals: goals,
-      swapTarget: b,
-      initialTriggers: triggers,
-    );
-
-    for (final step in steps) {
-      if (step.cascadeIndex > maxCascadeReached) {
-        maxCascadeReached = step.cascadeIndex;
-      }
-      // Haptics: cascade ≥ 2 → combo, 4/5+ specials → mocne.
-      if (step.cascadeIndex == 0) {
-        onHapticEvent?.call('match3');
-      } else if (step.cascadeIndex == 1) {
-        onHapticEvent?.call('match4');
-      } else {
-        onHapticEvent?.call('cascade');
-      }
-      if (step.spawnedSpecials.isNotEmpty) {
-        onHapticEvent?.call('special');
-      }
-      await renderer.animateCascadeStep(step);
-    }
-
-    busy = false;
-    _emit();
-
+  void checkWinLose() {
     if (goals.allGoalsMet) {
-      _onWin();
+      onWinInternal();
     } else if (movesLeft <= 0) {
-      _onLose();
-    } else if (!board.hasAnyValidMove()) {
-      board.shuffleUntilPlayable();
-      renderer.syncFromBoard(animate: true);
+      onLoseInternal();
     }
   }
 
-  void _onWin() {
+  void onWinInternal() {
     renderer.celebrateWin();
     onHapticEvent?.call('win');
     final stars = goals.starsFromScore(score.score, levelData.starThresholds);
@@ -356,7 +220,7 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
     ));
   }
 
-  void _onLose() {
+  void onLoseInternal() {
     onHapticEvent?.call('lose');
     onLose(GameSnapshot(
       score: score.score,
@@ -370,10 +234,10 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
 
   void grantExtraMoves(int n) {
     movesLeft += n;
-    _emit();
+    emitUpdate();
   }
 
-  void _emit() {
+  void emitUpdate() {
     onUpdate(GameSnapshot(
       score: score.score,
       movesLeft: movesLeft,
@@ -383,22 +247,4 @@ class GemRushGame extends FlameGame with DragCallbacks, TapCallbacks {
       isLose: false,
     ));
   }
-}
-
-class GameSnapshot {
-  final int score;
-  final int movesLeft;
-  final double goalProgress;
-  final int stars;
-  final bool isWin;
-  final bool isLose;
-
-  const GameSnapshot({
-    required this.score,
-    required this.movesLeft,
-    required this.goalProgress,
-    required this.stars,
-    required this.isWin,
-    required this.isLose,
-  });
 }
