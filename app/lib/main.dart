@@ -152,19 +152,30 @@ Future<void> _bootstrap() async {
 
 /// Jeśli Hive box się popsuje (np. mismatch typeId po update), spróbuj
 /// usunąć z dysku i otworzyć ponownie. Bez tego cala apka pada przy starcie.
+///
+/// Ważne: errors z `deleteBoxFromDisk` ignorujemy — często plik nie
+/// istnieje (PathNotFoundException) i to OK, kontynuujemy próbą drugiego
+/// init. Tylko jak DRUGI init pada, rzucamy z OBYDWOMA błędami.
 Future<void> _safeBoxInit(
     Future<void> Function() initFn, String boxName) async {
   try {
     await initFn();
-  } catch (e) {
-    debugPrint('[bootstrap] box "$boxName" init failed: $e');
-    debugPrint('[bootstrap] retrying after deleteBoxFromDisk...');
+    return;
+  } catch (first) {
+    debugPrint('[bootstrap] "$boxName" first init failed: $first');
     try {
       await Hive.deleteBoxFromDisk(boxName);
+    } catch (deleteErr) {
+      // Często `.lock` plik nie istnieje — to OK, idź dalej.
+      debugPrint('[bootstrap] deleteBoxFromDisk("$boxName") ignored: $deleteErr');
+    }
+    try {
       await initFn();
-    } catch (e2) {
-      debugPrint('[bootstrap] retry of "$boxName" failed: $e2');
-      rethrow;
+    } catch (second) {
+      throw Exception(
+          'Box "$boxName" init failed twice.\n'
+          'FIRST: $first\n'
+          'SECOND (after delete attempt): $second');
     }
   }
 }
