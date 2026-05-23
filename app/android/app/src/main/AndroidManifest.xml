@@ -3,16 +3,16 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="com.android.vending.BILLING"/>
     <application
-        android:label="GemRush"
+        android:label="Gem Rush Saga"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!--
-            AdMob App ID — TESTOWE (zastąp produkcyjnym po założeniu konta AdMob).
-            Identyfikator dotyczy aplikacji, nie pojedynczej jednostki reklamowej.
+            AdMob APPLICATION_ID usunięty — google_mobile_ads jest tymczasowo
+            wyłączony w pubspec. Gdy będziesz wracał z plugin, dodaj z powrotem:
+            <meta-data
+                android:name="com.google.android.gms.ads.APPLICATION_ID"
+                android:value="ca-app-pub-PROD-ID-HERE"/>
         -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

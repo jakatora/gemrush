@@ -30,8 +30,11 @@ dependencies:
   shared_preferences: ^2.3.2
   path_provider: ^2.1.4
 
-  # Ads
-  google_mobile_ads: ^5.1.0
+  # Ads — TYMCZASOWO WYŁĄCZONE (crashowało launch na realnym Androidzie).
+  # Po podłączeniu Firebase + sprawdzeniu Google Play Services włącz z powrotem:
+  #   google_mobile_ads: ^5.1.0
+  # Kod AdsService + ConsentService pozostaje jako stub, można podłączyć
+  # plugin bez zmian po stronie consumerów (gra/szop).
 
   # IAP
   in_app_purchase: ^3.2.0
