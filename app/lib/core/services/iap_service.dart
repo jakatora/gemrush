@@ -1,12 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../data/repositories/profile_repository.dart';
 import 'analytics_service.dart';
 
-/// Definicje produktów. Cena lokalna pobierana ze sklepu (Google/Apple) przy `loadProducts`.
+/// Definicje produktów. Stuby do czasu podłączenia z powrotem
+/// `in_app_purchase` plugin.
 class IapProducts {
   static const removeAds = 'remove_ads';
   static const coins100 = 'coins_100';
@@ -30,7 +28,6 @@ class IapProducts {
 
   static const nonConsumables = {removeAds, starterPack};
 
-  /// Ilość monet dawanych przez produkt (0 dla non-coin).
   static int coinsFor(String productId) => switch (productId) {
         coins100 => 100,
         coins500 => 600,
@@ -42,118 +39,49 @@ class IapProducts {
       };
 }
 
+/// Minimalny stand-in dla ProductDetails — żeby ShopScreen się kompilował
+/// bez plugin'a `in_app_purchase`.
+class ProductDetails {
+  final String id;
+  final String title;
+  final String description;
+  final String price;
+  const ProductDetails({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.price,
+  });
+}
+
+/// IapService — STUB. Plugin `in_app_purchase` jest tymczasowo wyłączony
+/// (jak google_mobile_ads, oba wymagają Google Play Services i razem
+/// crashowaly launch).
+///
+/// Kod consumerow (ShopScreen, GameScreen.removeAdsPurchased) zostaje
+/// niezmieniony. Gdy wracamy do plugin'a, podmieniamy implementację tej
+/// klasy + przywracamy package w pubspec.
 class IapService {
   IapService({required this.profileRepo, required this.analytics});
 
   final ProfileRepository profileRepo;
   final AnalyticsService analytics;
-  final InAppPurchase _iap = InAppPurchase.instance;
 
-  bool _available = false;
+  final bool _available = false;
   bool get available => _available;
 
   final Map<String, ProductDetails> _products = {};
   Map<String, ProductDetails> get products => _products;
 
-  StreamSubscription<List<PurchaseDetails>>? _sub;
-
   Future<void> init() async {
-    // in_app_purchase ma implementacje tylko na Android/iOS. Na desktopie
-    // odwołanie do platformy rzuca LateInitializationError — łapiemy je tu.
-    try {
-      _available = await _iap.isAvailable();
-    } catch (e) {
-      _available = false;
-      if (kDebugMode) debugPrint('[iap] niedostępne na tej platformie: $e');
-      return;
-    }
-    if (!_available) {
-      if (kDebugMode) debugPrint('[iap] store not available');
-      return;
-    }
-    _sub = _iap.purchaseStream.listen(_onPurchaseUpdate, onDone: () {
-      _sub?.cancel();
-    });
-    await loadProducts();
+    if (kDebugMode) debugPrint('[iap] STUB — plugin disabled');
   }
 
-  Future<void> loadProducts() async {
-    if (!_available) return;
-    final resp = await _iap.queryProductDetails(IapProducts.all);
-    if (resp.error != null) {
-      if (kDebugMode) debugPrint('[iap] query error: ${resp.error}');
-    }
-    for (final p in resp.productDetails) {
-      _products[p.id] = p;
-    }
-    if (kDebugMode) {
-      debugPrint('[iap] loaded ${_products.length}/${IapProducts.all.length}');
-    }
-  }
+  Future<void> loadProducts() async {}
 
-  Future<bool> buy(String productId) async {
-    final p = _products[productId];
-    if (p == null) {
-      if (kDebugMode) debugPrint('[iap] product missing: $productId');
-      return false;
-    }
-    final param = PurchaseParam(productDetails: p);
-    if (IapProducts.nonConsumables.contains(productId)) {
-      return _iap.buyNonConsumable(purchaseParam: param);
-    }
-    return _iap.buyConsumable(purchaseParam: param, autoConsume: false);
-  }
+  Future<bool> buy(String productId) async => false;
 
-  Future<void> restorePurchases() async {
-    if (!_available) return; // nie dostępne na desktopie / przed init
-    try {
-      await _iap.restorePurchases();
-    } catch (e) {
-      if (kDebugMode) debugPrint('[iap] restore nieobsłużony: $e');
-    }
-  }
+  Future<void> restorePurchases() async {}
 
-  Future<void> _onPurchaseUpdate(List<PurchaseDetails> purchases) async {
-    for (final purchase in purchases) {
-      if (purchase.status == PurchaseStatus.purchased ||
-          purchase.status == PurchaseStatus.restored) {
-        await _handlePurchaseSuccess(purchase);
-      } else if (purchase.status == PurchaseStatus.error) {
-        if (kDebugMode) debugPrint('[iap] error: ${purchase.error}');
-      }
-      if (purchase.pendingCompletePurchase) {
-        await _iap.completePurchase(purchase);
-      }
-      // Consumable confirm następuje przez `completePurchase` powyżej —
-      // platforma sama oznacza zakup jako "skonsumowany".
-    }
-  }
-
-  Future<void> _handlePurchaseSuccess(PurchaseDetails p) async {
-    final coins = IapProducts.coinsFor(p.productID);
-    if (coins > 0) {
-      await profileRepo.addCoins(coins);
-    }
-    if (p.productID == IapProducts.removeAds) {
-      await profileRepo.markRemoveAdsPurchased();
-    }
-    if (p.productID == IapProducts.starterPack) {
-      await profileRepo.setLives(5);
-    }
-    if (p.productID == IapProducts.unlimitedLives24h) {
-      final profile = profileRepo.current;
-      profile.unlimitedLivesActive = true;
-      profile.unlimitedLivesUntil =
-          DateTime.now().add(const Duration(hours: 24)).millisecondsSinceEpoch;
-      await profile.save();
-    }
-    analytics.logIapPurchase(p.productID, 0, 'PLN');
-    // TODO[BLOCKER B-IAP-RECEIPT]: walidacja receipta po stronie backendu
-    // (przeciw spoof'om). Wymaga Cloud Function + Google Play Developer API +
-    // Apple App Store Verification endpoint.
-  }
-
-  void dispose() {
-    _sub?.cancel();
-  }
+  void dispose() {}
 }

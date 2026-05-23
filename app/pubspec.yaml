@@ -36,8 +36,9 @@ dependencies:
   # Kod AdsService + ConsentService pozostaje jako stub, można podłączyć
   # plugin bez zmian po stronie consumerów (gra/szop).
 
-  # IAP
-  in_app_purchase: ^3.2.0
+  # IAP — TYMCZASOWO WYŁĄCZONE (jak google_mobile_ads, oba wymagają
+  # Google Play Services, mogą crashować launch).
+  # in_app_purchase: ^3.2.0
 
   # UI
   google_fonts: ^6.2.1

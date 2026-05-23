@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/services/iap_service.dart';
