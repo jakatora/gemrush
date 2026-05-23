@@ -1,12 +1,29 @@
-# Gem Rush Saga — Privacy Policy
+---
+layout: default
+title: Gem Rush Saga
+---
 
-**Last updated:** 2026-05-23
+# 💎 Gem Rush Saga
+
+**Mobilna gra puzzle typu match-3 — 300 poziomów, 17 światów, codzienne wyzwania.**
+
+Dostępna na Android (Google Play) i iOS (App Store).
+
+[**📋 Privacy Policy**](#privacy-policy) ·
+[**🆘 Support**](#support) ·
+[**📧 Kontakt**](mailto:jakatora68@gmail.com)
+
+---
+
+# Privacy Policy
+
+**Ostatnia aktualizacja:** 2026-05-23
 
 ## Polski
 
 ### 1. Kto zbiera dane
 
-Administratorem danych jest **jakatora** (kontakt: **jakatora68@gmail.com**).
+Administratorem danych jest **jakatora** (kontakt: [jakatora68@gmail.com](mailto:jakatora68@gmail.com)).
 
 Gem Rush Saga ("Aplikacja") jest mobilną grą logiczną typu match-3 dystrybuowaną przez Google Play i App Store.
 
@@ -27,13 +44,13 @@ Dane te są zapisywane w lokalnej bazie Hive i nie są przesyłane do nas ani do
 Aktualna wersja **nie zawiera reklam ani zakupów w aplikacji**. W przyszłych wersjach możemy dodać:
 
 - **Google AdMob** — reklamy między poziomami i opcjonalne rewarded ads
-- **Google Play Billing / Apple In-App Purchase** — zakupy monet, paczek życ, wyłączenie reklam
+- **Google Play Billing / Apple In-App Purchase** — zakupy monet, paczek żyć, wyłączenie reklam
 
 W takiej sytuacji ta Polityka zostanie zaktualizowana, a użytkownicy zostaną poproszeni o zgodę (GDPR consent) przed serwowaniem spersonalizowanych reklam.
 
 ### 4. Uprawnienia systemowe
 
-Aplikacja używa standardowych Flutter/Android/iOS API. Wymagania:
+Aplikacja używa standardowych Flutter/Android/iOS API:
 
 - **INTERNET** (Android) — zarezerwowane na przyszłe funkcje online (obecnie nieaktywne)
 - **ACCESS_NETWORK_STATE** (Android) — sprawdzanie dostępu do sieci
@@ -44,12 +61,13 @@ Nie wymagamy: lokalizacji, kamery, mikrofonu, kontaktów, ani innych wrażliwych
 ### 5. Twoje prawa (RODO)
 
 Masz prawo do:
+
 - **Dostępu** do swoich danych
 - **Sprostowania** błędnych danych
 - **Usunięcia** danych (odinstaluj aplikację — wszystkie lokalne dane znikają)
 - **Cofnięcia zgody** w dowolnym momencie
 
-Aby skorzystać z tych praw, napisz na **jakatora68@gmail.com**.
+Aby skorzystać z tych praw, napisz na [jakatora68@gmail.com](mailto:jakatora68@gmail.com).
 
 ### 6. Wiek minimalny
 
@@ -65,7 +83,7 @@ W przypadku istotnych zmian zaktualizujemy datę powyżej i — jeśli zmiany do
 
 ### 9. Kontakt
 
-**Email:** jakatora68@gmail.com
+**Email:** [jakatora68@gmail.com](mailto:jakatora68@gmail.com)
 
 ---
 
@@ -73,7 +91,7 @@ W przypadku istotnych zmian zaktualizujemy datę powyżej i — jeśli zmiany do
 
 ### 1. Data controller
 
-Gem Rush Saga is operated by **jakatora** (contact: **jakatora68@gmail.com**).
+Gem Rush Saga is operated by **jakatora** (contact: [jakatora68@gmail.com](mailto:jakatora68@gmail.com)).
 
 ### 2. What data we collect
 
@@ -99,6 +117,7 @@ If we add these, this policy will be updated and users will be asked for GDPR co
 ### 4. System permissions
 
 Standard Flutter/Android/iOS APIs only. Requirements:
+
 - **INTERNET** (Android) — reserved for future online features
 - **ACCESS_NETWORK_STATE** (Android)
 - Standard disk (Hive) and screen rendering APIs
@@ -107,7 +126,7 @@ We do not require: location, camera, microphone, contacts, or other sensitive pe
 
 ### 5. Your rights (GDPR)
 
-Access, rectification, deletion (uninstall the app — all local data removed), consent withdrawal. Email **jakatora68@gmail.com** to exercise these rights.
+Access, rectification, deletion (uninstall the app — all local data removed), consent withdrawal. Email [jakatora68@gmail.com](mailto:jakatora68@gmail.com) to exercise these rights.
 
 ### 6. Minimum age
 
@@ -115,4 +134,52 @@ Access, rectification, deletion (uninstall the app — all local data removed), 
 
 ### 7. Contact
 
-**Email:** jakatora68@gmail.com
+**Email:** [jakatora68@gmail.com](mailto:jakatora68@gmail.com)
+
+---
+
+# Support
+
+## Polski
+
+### Masz problem z grą?
+
+Napisz na **[jakatora68@gmail.com](mailto:jakatora68@gmail.com)** — odpowiemy w ciągu 48h.
+
+### Częste pytania
+
+**Q: Straciłem(am) postęp po zmianie telefonu.**
+Postęp jest zapisywany lokalnie. Brak cloud save w obecnej wersji — w przyszłych wersjach dodamy synchronizację.
+
+**Q: Gra crashuje przy starcie.**
+Spróbuj: odinstaluj i zainstaluj ponownie. Jeśli nie pomoże, prześlij zrzut ekranu błędu na email.
+
+**Q: Czy mogę grać offline?**
+Tak, gra w 100% działa offline.
+
+**Q: Czy będą nowe poziomy?**
+Tak, planowane są kolejne światy i aktualizacje sezonowe.
+
+## English
+
+### Need help?
+
+Email **[jakatora68@gmail.com](mailto:jakatora68@gmail.com)** — we respond within 48h.
+
+### FAQ
+
+**Q: I lost my progress after changing phones.**
+Progress is saved locally. No cloud save in current version — future versions will add sync.
+
+**Q: The app crashes at startup.**
+Try: uninstall and reinstall. If that doesn't help, send a screenshot of the error to email.
+
+**Q: Can I play offline?**
+Yes, the game is 100% offline.
+
+**Q: Will there be new levels?**
+Yes, more worlds and seasonal updates are planned.
+
+---
+
+<small>© 2026 jakatora · <a href="#privacy-policy">Privacy</a> · <a href="#support">Support</a></small>
