@@ -6,28 +6,22 @@
         Privacy Manifest — iOS 17+ wymaga deklaracji jak app uzywa
         wrazliwych API i jakie dane zbiera.
         Dokumentacja: https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
+
+        TYMCZASOWO bez trackingu (google_mobile_ads usuniety z pubspec).
+        Gdy wracamy do AdMob, ustaw NSPrivacyTracking=true + dodaj
+        TrackingDomains + AdMob CollectedDataTypes.
     -->
 
-    <!-- Czy app sledzi uzytkownika przez sieci? -->
     <key>NSPrivacyTracking</key>
-    <true/>
-
-    <!-- Domeny uzywane do trackingu (AdMob + UMP). -->
-    <key>NSPrivacyTrackingDomains</key>
-    <array>
-        <string>googleads.g.doubleclick.net</string>
-        <string>googlesyndication.com</string>
-        <string>google-analytics.com</string>
-    </array>
+    <false/>
 
     <!--
-        Wykorzystywane "Required Reason API" - Apple wymaga uzasadnienia.
-        Pelna lista API + reason codes:
-        https://developer.apple.com/documentation/bundleresources/privacy_manifest_files/describing_use_of_required_reason_api
+        Required Reason API — Apple wymaga uzasadnienia dla
+        wybranych systemowych API.
     -->
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
-        <!-- UserDefaults (uzywane przez shared_preferences / Hive metadata) -->
+        <!-- UserDefaults (uzywane przez Hive / shared_preferences) -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
@@ -36,22 +30,13 @@
                 <string>CA92.1</string>
             </array>
         </dict>
-        <!-- File timestamp (Hive uzywa do zapisu lokalnego stanu) -->
+        <!-- File timestamp (Hive uzywa do zapisu stanu) -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
             <key>NSPrivacyAccessedAPITypeReasons</key>
             <array>
                 <string>C617.1</string>
-            </array>
-        </dict>
-        <!-- System Boot Time (firebase_analytics fallback) -->
-        <dict>
-            <key>NSPrivacyAccessedAPIType</key>
-            <string>NSPrivacyAccessedAPICategorySystemBootTime</string>
-            <key>NSPrivacyAccessedAPITypeReasons</key>
-            <array>
-                <string>35F9.1</string>
             </array>
         </dict>
         <!-- Disk Space (Hive moze sprawdzac wolne miejsce) -->
@@ -66,63 +51,11 @@
     </array>
 
     <!--
-        Deklaracja typow danych ktore app zbiera/wysyla.
-        TODO: gdy doda się Firebase Analytics + ad personalization, rozszerzyc.
+        Bez plugin'ow AdMob/Firebase aktualnie nie zbieramy zadnych danych
+        uzytkownika ponad to co system iOS ma domyslnie. Stad pusta tablica
+        CollectedDataTypes — aplikacja nie zbiera danych.
     -->
     <key>NSPrivacyCollectedDataTypes</key>
-    <array>
-        <!-- Device ID (IDFV/IDFA do AdMob) -->
-        <dict>
-            <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypeDeviceID</string>
-            <key>NSPrivacyCollectedDataTypeLinked</key>
-            <true/>
-            <key>NSPrivacyCollectedDataTypeTracking</key>
-            <true/>
-            <key>NSPrivacyCollectedDataTypePurposes</key>
-            <array>
-                <string>NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising</string>
-            </array>
-        </dict>
-        <!-- Product Interaction (level start/complete, IAP) -->
-        <dict>
-            <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypeProductInteraction</string>
-            <key>NSPrivacyCollectedDataTypeLinked</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypeTracking</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypePurposes</key>
-            <array>
-                <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
-                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-            </array>
-        </dict>
-        <!-- Crash Data + Performance (Crashlytics, gdy zostanie podlaczone) -->
-        <dict>
-            <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypeCrashData</string>
-            <key>NSPrivacyCollectedDataTypeLinked</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypeTracking</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypePurposes</key>
-            <array>
-                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-            </array>
-        </dict>
-        <dict>
-            <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypePerformanceData</string>
-            <key>NSPrivacyCollectedDataTypeLinked</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypeTracking</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypePurposes</key>
-            <array>
-                <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
-            </array>
-        </dict>
-    </array>
+    <array/>
 </dict>
 </plist>

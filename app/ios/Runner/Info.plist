@@ -49,45 +49,17 @@
 	<!--
 		Encryption export compliance. Gra używa wyłącznie HTTPS i standardowego
 		krypto systemowego — to zwalnia z dodatkowych deklaracji eksportowych.
-		Bez tego klucza: "Missing Compliance" warning w TestFlight przy każdym
-		buildzie.
 	-->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 
 	<!--
-		AdMob App ID — TESTOWE (zastąp produkcyjnym po założeniu konta AdMob).
-		Patrz: https://developers.google.com/admob/ios/quick-start#update_your_infoplist
+		AdMob / IAP / tracking — TYMCZASOWO WYŁĄCZONE (pluginy `google_mobile_ads`
+		i `in_app_purchase` usunięte z pubspec). Gdy wracamy, dodaj z powrotem:
+		  - GADApplicationIdentifier (prod App ID z AdMob)
+		  - NSUserTrackingUsageDescription
+		  - SKAdNetworkItems (60+ identyfikatorów z dokumentacji AdMob)
+		Bez tych pluginów deklarowanie tracking'a złamałoby App Store review.
 	-->
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
-
-	<!--
-		App Tracking Transparency (ATT) — wymagane dla IDFA.
-		Tekst widoczny w prompcie; trzymaj krótki i konkretny.
-	-->
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Pozwól nam dostarczać trafniejsze reklamy, dzięki czemu możemy utrzymać darmową grę.</string>
-
-	<!--
-		SKAdNetwork — wymagane dla atrybucji instalacji od reklam na iOS 14.5+.
-		PEŁNA lista (60+ pozycji) z dokumentacji AdMob:
-		https://developers.google.com/admob/ios/ios14
-		[BLOCKER B-SKAN]: lista poniżej to skrócona próbka. Przed publikacją wklej pełną
-		listę 60+ identyfikatorów od Google'a.
-	-->
-	<key>SKAdNetworkItems</key>
-	<array>
-		<dict><key>SKAdNetworkIdentifier</key><string>cstr6suwn9.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>4fzdc2evr5.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>2u9pt9hc89.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>8s468mfl3y.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>klf5c3l5u5.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>ppxm28t8ap.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>4468km3ulz.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>7ug5zh24hu.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>9rd848q2bz.skadnetwork</string></dict>
-		<dict><key>SKAdNetworkIdentifier</key><string>n6fk4nfna4.skadnetwork</string></dict>
-	</array>
 </dict>
 </plist>
