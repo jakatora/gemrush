@@ -159,7 +159,7 @@ workflows:
         script: |
           flutter build ipa \
             --release \
-            --build-name=1.0.0 \
+            --build-name=1.0.1 \
             --build-number=$(($BUILD_NUMBER + 100)) \
             --export-options-plist="$CM_BUILD_DIR/export_options.plist"
     artifacts:
@@ -205,7 +205,7 @@ workflows:
         script: |
           flutter build ipa \
             --release \
-            --build-name=1.0.0 \
+            --build-name=1.0.1 \
             --build-number=$(($BUILD_NUMBER + 100)) \
             --export-options-plist="$CM_BUILD_DIR/export_options.plist"
     artifacts:
@@ -252,7 +252,7 @@ workflows:
         script: |
           flutter build appbundle \
             --release \
-            --build-name=1.0.0 \
+            --build-name=1.0.1 \
             --build-number=$(($BUILD_NUMBER + 100))
     artifacts:
       - build/app/outputs/bundle/release/*.aab
