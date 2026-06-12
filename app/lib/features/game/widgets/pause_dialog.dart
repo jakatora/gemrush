@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/i18n/app_locale.dart';
 import '../../../providers/app_providers.dart';
 
 class PauseDialog extends ConsumerStatefulWidget {
@@ -35,8 +36,8 @@ class _PauseDialogState extends ConsumerState<PauseDialog> {
           children: [
             const Icon(Icons.pause_circle, size: 56, color: AppColors.accent),
             const SizedBox(height: 12),
-            const Text('Pauza',
-                style: TextStyle(
+            Text(context.tr(en: 'Paused', pl: 'Pauza'),
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                   color: AppColors.onSurface,
@@ -44,7 +45,7 @@ class _PauseDialogState extends ConsumerState<PauseDialog> {
             const SizedBox(height: 20),
             _Toggle(
               icon: Icons.volume_up,
-              label: 'Dźwięki',
+              label: context.tr(en: 'Sound', pl: 'Dźwięki'),
               value: settings.soundEnabled,
               onChanged: (v) async {
                 await ref.read(settingsRepoProvider).setSound(v);
@@ -54,7 +55,7 @@ class _PauseDialogState extends ConsumerState<PauseDialog> {
             ),
             _Toggle(
               icon: Icons.music_note,
-              label: 'Muzyka',
+              label: context.tr(en: 'Music', pl: 'Muzyka'),
               value: settings.musicEnabled,
               onChanged: (v) async {
                 await ref.read(settingsRepoProvider).setMusic(v);
@@ -65,7 +66,7 @@ class _PauseDialogState extends ConsumerState<PauseDialog> {
             ),
             _Toggle(
               icon: Icons.vibration,
-              label: 'Wibracje',
+              label: context.tr(en: 'Haptics', pl: 'Wibracje'),
               value: settings.hapticsEnabled,
               onChanged: (v) async {
                 await ref.read(settingsRepoProvider).setHaptics(v);
@@ -80,7 +81,7 @@ class _PauseDialogState extends ConsumerState<PauseDialog> {
                 widget.onResume();
               },
               icon: const Icon(Icons.play_arrow),
-              label: const Text('Wznów'),
+              label: Text(context.tr(en: 'Resume', pl: 'Wznów')),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
@@ -89,7 +90,8 @@ class _PauseDialogState extends ConsumerState<PauseDialog> {
                 widget.onRestart();
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Restartuj poziom'),
+              label: Text(
+                  context.tr(en: 'Restart level', pl: 'Restartuj poziom')),
             ),
             const SizedBox(height: 8),
             TextButton.icon(
@@ -98,8 +100,9 @@ class _PauseDialogState extends ConsumerState<PauseDialog> {
                 widget.onQuit();
               },
               icon: const Icon(Icons.exit_to_app, color: AppColors.muted),
-              label: const Text('Wyjdź do mapy',
-                  style: TextStyle(color: AppColors.muted)),
+              label: Text(
+                  context.tr(en: 'Exit to map', pl: 'Wyjdź do mapy'),
+                  style: const TextStyle(color: AppColors.muted)),
             ),
           ],
         ),

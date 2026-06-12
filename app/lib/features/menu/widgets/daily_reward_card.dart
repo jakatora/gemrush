@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/i18n/app_locale.dart';
 import '../../../providers/app_providers.dart';
 
 class DailyRewardCard extends ConsumerWidget {
@@ -29,7 +30,12 @@ class DailyRewardCard extends ConsumerWidget {
                   ref.read(profileRepoProvider).current.coins;
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Codzienna nagroda: +$reward monet!')),
+                  SnackBar(
+                    content: Text(context.tr(
+                      en: 'Daily reward: +$reward coins!',
+                      pl: 'Codzienna nagroda: +$reward monet!',
+                    )),
+                  ),
                 );
               }
             }
@@ -44,7 +50,10 @@ class DailyRewardCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Codzienna nagroda: +${status.rewardCoins} monet',
+                    context.tr(
+                      en: 'Daily reward: +${status.rewardCoins} coins',
+                      pl: 'Codzienna nagroda: +${status.rewardCoins} monet',
+                    ),
                     style: const TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.w700,

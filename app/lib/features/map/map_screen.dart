@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/routes.dart';
+import '../../core/i18n/app_locale.dart';
 import '../../data/repositories/level_repository.dart';
 import '../../providers/app_providers.dart';
 import '../game/world_theme.dart';
@@ -53,10 +54,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               final worldId = idx + 1;
               final theme = WorldTheme.forWorld(worldId);
               final reached = worldId <= unlockedWorld;
+              final worldLabel = ctx.tr(en: 'World', pl: 'Świat');
               return ListTile(
                 leading: Icon(theme.icon,
                     color: reached ? theme.accent : AppColors.muted),
-                title: Text('Świat $worldId · ${theme.name}',
+                title: Text(
+                    '$worldLabel $worldId · ${theme.localizedName(ctx)}',
                     style: TextStyle(
                       color: reached ? AppColors.onSurface : AppColors.muted,
                     )),
@@ -83,13 +86,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mapa świata'),
+        title: Text(context.tr(en: 'World map', pl: 'Mapa świata')),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.list),
-            tooltip: 'Przeskocz do świata',
+            tooltip: context.tr(en: 'Jump to world', pl: 'Przeskocz do świata'),
             onPressed: () =>
                 _showWorldMenu(context, progressRepo.highestUnlocked),
           ),
@@ -179,7 +182,7 @@ class _WorldSection extends StatelessWidget {
                 Icon(theme.icon, color: theme.gradient.last, size: 28),
                 const SizedBox(width: 10),
                 Text(
-                  'Świat $worldId · ${theme.name}',
+                  '${context.tr(en: 'World', pl: 'Świat')} $worldId · ${theme.localizedName(context)}',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.onSurface,
                         fontWeight: FontWeight.w700,

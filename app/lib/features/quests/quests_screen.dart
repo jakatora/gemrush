@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/i18n/app_locale.dart';
 import '../../data/models/quest.dart';
 import '../../providers/app_providers.dart';
+import 'quest_i18n.dart';
 
 class QuestsScreen extends ConsumerStatefulWidget {
   const QuestsScreen({super.key});
@@ -20,13 +22,18 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     final completed = quests.where((q) => q.completed).length;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Wyzwania dnia $completed/${quests.length}')),
+      appBar: AppBar(
+          title: Text(
+              '${context.tr(en: 'Daily quests', pl: 'Wyzwania dnia')} $completed/${quests.length}')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Codzienne wyzwania resetują się o północy. Dokończ je, by zarobić bonusowe monety!',
-            style: TextStyle(color: AppColors.muted, fontSize: 13),
+          Text(
+            context.tr(
+              en: 'Daily quests reset at midnight. Finish them for bonus coins!',
+              pl: 'Codzienne wyzwania resetują się o północy. Dokończ je, by zarobić bonusowe monety!',
+            ),
+            style: const TextStyle(color: AppColors.muted, fontSize: 13),
           ),
           const SizedBox(height: 16),
           for (final q in quests) _QuestTile(quest: q, onClaim: _claim),
@@ -43,9 +50,12 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
       await profile.addCoins(reward);
       ref.read(coinsProvider.notifier).state = profile.current.coins;
       if (mounted) {
+        final title = questTitleFor(context, q);
+        final coinsWord =
+            context.tr(en: 'coins for', pl: 'monet za');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('🎉 +$reward monet za: ${q.title}'),
+            content: Text('🎉 +$reward $coinsWord: $title'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -96,7 +106,7 @@ class _QuestTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(quest.title,
+                  Text(questTitleFor(context, quest),
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -104,10 +114,13 @@ class _QuestTile extends StatelessWidget {
                             ? AppColors.muted
                             : AppColors.onSurface,
                       )),
-                  if (quest.description.isNotEmpty)
-                    Text(quest.description,
+                  Builder(builder: (context) {
+                    final desc = questDescriptionFor(context, quest);
+                    if (desc.isEmpty) return const SizedBox.shrink();
+                    return Text(desc,
                         style: const TextStyle(
-                            color: AppColors.muted, fontSize: 11)),
+                            color: AppColors.muted, fontSize: 11));
+                  }),
                   const SizedBox(height: 6),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),

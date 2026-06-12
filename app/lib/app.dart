@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/constants/routes.dart';
+import 'core/i18n/app_locale.dart';
 import 'core/theme/app_theme.dart';
 import 'features/achievements/achievements_screen.dart';
 import 'features/game/game_screen.dart';
@@ -13,12 +16,15 @@ import 'features/splash/splash_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/quests/quests_screen.dart';
 import 'features/stats/stats_screen.dart';
+import 'providers/app_providers.dart';
 
-class GemRushApp extends StatelessWidget {
+class GemRushApp extends ConsumerWidget {
   const GemRushApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final localeNotifier = ref.watch(localeNotifierProvider);
+
     final router = GoRouter(
       initialLocation: Routes.splash,
       routes: [
@@ -56,11 +62,29 @@ class GemRushApp extends StatelessWidget {
       ],
     );
 
-    return MaterialApp.router(
-      title: 'GemRush',
-      theme: AppTheme.buildDark(),
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
+    return LocaleScope(
+      notifier: localeNotifier,
+      child: AnimatedBuilder(
+        animation: localeNotifier,
+        builder: (context, _) {
+          return MaterialApp.router(
+            title: 'Gem Rush Saga',
+            theme: AppTheme.buildDark(),
+            debugShowCheckedModeBanner: false,
+            locale: localeNotifier.locale.toLocale(),
+            supportedLocales: const [
+              Locale('en'),
+              Locale('pl'),
+            ],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            routerConfig: router,
+          );
+        },
+      ),
     );
   }
 }

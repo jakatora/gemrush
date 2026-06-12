@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/i18n/app_locale.dart';
 import '../core/services/ads_service.dart';
 import '../core/services/analytics_service.dart';
 import '../core/services/audio_service.dart';
@@ -45,6 +46,13 @@ final iapServiceProvider = Provider<IapService>((ref) {
     profileRepo: ref.read(profileRepoProvider),
     analytics: ref.read(analyticsProvider),
   );
+});
+
+/// Trzyma aktualny LocaleNotifier (ChangeNotifier). Init z settings repo
+/// w main.dart, po init settingsRepoProvider.
+final localeNotifierProvider = Provider<LocaleNotifier>((ref) {
+  final settings = ref.read(settingsRepoProvider).current;
+  return LocaleNotifier(AppLocale.fromCode(settings.language));
 });
 
 /// Reactive: aktualna liczba monet i żyć (do widgetów HUD/Menu).

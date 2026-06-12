@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/i18n/app_locale.dart';
 import '../../../providers/app_providers.dart';
 
 class WinDialog extends ConsumerStatefulWidget {
@@ -68,8 +69,8 @@ class _WinDialogState extends ConsumerState<WinDialog>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Poziom ukończony!',
-                style: TextStyle(
+            Text(context.tr(en: 'Level complete!', pl: 'Poziom ukończony!'),
+                style: const TextStyle(
                   fontSize: 24,
                   color: AppColors.onSurface,
                   fontWeight: FontWeight.w700,
@@ -95,7 +96,8 @@ class _WinDialogState extends ConsumerState<WinDialog>
               }),
             ),
             const SizedBox(height: 12),
-            Text('Wynik: ${widget.score}',
+            Text(
+                '${context.tr(en: 'Score', pl: 'Wynik')}: ${widget.score}',
                 style: const TextStyle(
                   color: AppColors.onSurface,
                   fontSize: 18,
@@ -122,7 +124,10 @@ class _WinDialogState extends ConsumerState<WinDialog>
                   if (ok && context.mounted) Navigator.of(context).pop();
                 },
                 icon: const Icon(Icons.play_circle),
-                label: const Text('Podwój monety (reklama)'),
+                label: Text(context.tr(
+                  en: 'Double coins (ad)',
+                  pl: 'Podwój monety (reklama)',
+                )),
               ),
             const SizedBox(height: 12),
             ElevatedButton(
@@ -130,7 +135,7 @@ class _WinDialogState extends ConsumerState<WinDialog>
                 Navigator.of(context).pop();
                 widget.onContinue();
               },
-              child: const Text('Dalej'),
+              child: Text(context.tr(en: 'Continue', pl: 'Dalej')),
             ),
           ],
         ),
@@ -214,8 +219,8 @@ class _LoseDialogState extends ConsumerState<LoseDialog>
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Zabrakło ruchów',
-                  style: TextStyle(
+              Text(context.tr(en: 'Out of moves', pl: 'Zabrakło ruchów'),
+                  style: const TextStyle(
                     fontSize: 22,
                     color: AppColors.onSurface,
                     fontWeight: FontWeight.w700,
@@ -228,7 +233,10 @@ class _LoseDialogState extends ConsumerState<LoseDialog>
                     if (ok && context.mounted) Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.play_circle),
-                  label: const Text('+5 ruchów (reklama)'),
+                  label: Text(context.tr(
+                    en: '+5 moves (ad)',
+                    pl: '+5 ruchów (reklama)',
+                  )),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                   ),
@@ -239,7 +247,8 @@ class _LoseDialogState extends ConsumerState<LoseDialog>
                   Navigator.of(context).pop();
                   widget.onRetry();
                 },
-                child: const Text('Spróbuj ponownie'),
+                child: Text(
+                    context.tr(en: 'Try again', pl: 'Spróbuj ponownie')),
               ),
               const SizedBox(height: 8),
               TextButton(
@@ -247,8 +256,8 @@ class _LoseDialogState extends ConsumerState<LoseDialog>
                   Navigator.of(context).pop();
                   widget.onClose();
                 },
-                child: const Text('Wyjdź',
-                    style: TextStyle(color: AppColors.muted)),
+                child: Text(context.tr(en: 'Exit', pl: 'Wyjdź'),
+                    style: const TextStyle(color: AppColors.muted)),
               ),
             ],
           ),

@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n/app_locale.dart';
 import '../../providers/app_providers.dart';
 import 'flame_components/gem_rush_game.dart';
 import 'flame_components/gem_rush_game_boosters.dart';
@@ -28,7 +31,7 @@ class BoosterActions {
     } else {
       final ok = await profileRepo.spendCoins(50);
       if (!ok) {
-        _snack('Za mało monet');
+        _snack(context.tr(en: 'Not enough coins', pl: 'Za mało monet'));
         return;
       }
       ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
@@ -42,7 +45,10 @@ class BoosterActions {
         .recordEvent(DateTime.now(), questId: 'booster_use');
     await ref.read(statsRepoProvider).recordBoosterUsed();
     if (!found && isMountedCheck()) {
-      _snack('Brak dostępnych ruchów — tasuję');
+      _snack(context.tr(
+        en: 'No moves available — shuffling',
+        pl: 'Brak dostępnych ruchów — tasuję',
+      ));
       await game?.useShuffle();
     }
   }
@@ -51,7 +57,7 @@ class BoosterActions {
     final profileRepo = ref.read(profileRepoProvider);
     final ok = await profileRepo.spendCoins(75);
     if (!ok) {
-      _snack('Za mało monet');
+      _snack(context.tr(en: 'Not enough coins', pl: 'Za mało monet'));
       return;
     }
     ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
@@ -79,7 +85,7 @@ class BoosterActions {
     }
     final ok = await profileRepo.spendCoins(200);
     if (!ok) {
-      _snack('Za mało monet');
+      _snack(context.tr(en: 'Not enough coins', pl: 'Za mało monet'));
       return;
     }
     ref.read(coinsProvider.notifier).state = profileRepo.current.coins;

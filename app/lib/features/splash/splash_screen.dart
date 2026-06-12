@@ -76,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen>
                   curve: const Interval(0.5, 1.0),
                 ),
                 child: Text(
-                  'GemRush',
+                  'Gem Rush Saga',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         color: AppColors.onSurface,
                         fontWeight: FontWeight.w700,

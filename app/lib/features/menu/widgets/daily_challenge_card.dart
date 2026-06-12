@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/routes.dart';
+import '../../../core/i18n/app_locale.dart';
 import '../../../providers/app_providers.dart';
 
 class DailyChallengeCard extends ConsumerWidget {
@@ -28,14 +29,18 @@ class DailyChallengeCard extends ConsumerWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.success.withValues(alpha: 0.5)),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.check_circle, color: AppColors.success, size: 24),
-              SizedBox(width: 12),
+              const Icon(Icons.check_circle,
+                  color: AppColors.success, size: 24),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Dzisiejsze wyzwanie ukończone!',
-                  style: TextStyle(color: AppColors.onSurface),
+                  context.tr(
+                    en: "Today's challenge completed!",
+                    pl: 'Dzisiejsze wyzwanie ukończone!',
+                  ),
+                  style: const TextStyle(color: AppColors.onSurface),
                 ),
               ),
             ],
@@ -74,16 +79,17 @@ class DailyChallengeCard extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Dzienne wyzwanie',
-                          style: TextStyle(
+                        Text(
+                          context.tr(
+                              en: 'Daily challenge', pl: 'Dzienne wyzwanie'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
                             letterSpacing: 1,
                           ),
                         ),
                         Text(
-                          'Poziom ${ch.levelId} · bonus +${ch.bonusCoins}',
+                          '${context.tr(en: 'Level', pl: 'Poziom')} ${ch.levelId} · bonus +${ch.bonusCoins}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

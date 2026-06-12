@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/i18n/app_locale.dart';
 import '../game_logic/goal_checker.dart';
 import '../models/level_goal.dart';
 import '../world_theme.dart';
@@ -99,7 +100,7 @@ class _ScorePanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Poziom $levelId',
+            '${context.tr(en: 'Level', pl: 'Poziom')} $levelId',
             style: TextStyle(
               color: accent.withValues(alpha: 0.9),
               fontSize: 11,
@@ -159,7 +160,7 @@ class _MovesPill extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Ruchy',
+          Text(context.tr(en: 'Moves', pl: 'Ruchy'),
               style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
           Text(
             '$moves',

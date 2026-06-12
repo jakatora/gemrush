@@ -209,7 +209,7 @@ class _ErrorApp extends StatelessWidget {
                       size: 56, color: Color(0xFFFF5C7C)),
                   const SizedBox(height: 12),
                   const Text(
-                    'GemRush — błąd startupu',
+                    'Gem Rush Saga — startup error',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -258,7 +258,7 @@ class _ErrorApp extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Skopiuj powyższy tekst i wyślij — sfixuję.',
+                    'Copy the text above and send it to support — we will fix it.',
                     style: TextStyle(color: Color(0xFFB8B0E0)),
                   ),
                 ],

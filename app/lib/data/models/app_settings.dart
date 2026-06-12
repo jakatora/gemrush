@@ -26,7 +26,7 @@ class AppSettings extends HiveObject {
     this.soundEnabled = true,
     this.musicEnabled = true,
     this.hapticsEnabled = true,
-    this.language = 'pl',
+    this.language = 'en',
     this.consentGiven = false,
     this.colorBlindMode = false,
   });

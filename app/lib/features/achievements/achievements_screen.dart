@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/i18n/app_locale.dart';
 import '../../data/models/achievement.dart';
 import '../../providers/app_providers.dart';
 
@@ -38,17 +39,25 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Osiągnięcia $unlocked/$total'),
+        title: Text(
+            '${context.tr(en: 'Achievements', pl: 'Osiągnięcia')} $unlocked/$total'),
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: SegmentedButton<_Filter>(
-              segments: const [
-                ButtonSegment(value: _Filter.all, label: Text('Wszystkie')),
-                ButtonSegment(value: _Filter.unlocked, label: Text('Zdobyte')),
-                ButtonSegment(value: _Filter.locked, label: Text('Do zdobycia')),
+              segments: [
+                ButtonSegment(
+                    value: _Filter.all,
+                    label: Text(context.tr(en: 'All', pl: 'Wszystkie'))),
+                ButtonSegment(
+                    value: _Filter.unlocked,
+                    label: Text(context.tr(en: 'Unlocked', pl: 'Zdobyte'))),
+                ButtonSegment(
+                    value: _Filter.locked,
+                    label:
+                        Text(context.tr(en: 'Locked', pl: 'Do zdobycia'))),
               ],
               selected: {_filter},
               onSelectionChanged: (s) => setState(() => _filter = s.first),
@@ -56,12 +65,15 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
           ),
           Expanded(
             child: filtered.isEmpty
-                ? const Center(
+                ? Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(24),
                       child: Text(
-                        'Brak pozycji w tej kategorii',
-                        style: TextStyle(color: AppColors.muted),
+                        context.tr(
+                          en: 'No items in this category',
+                          pl: 'Brak pozycji w tej kategorii',
+                        ),
+                        style: const TextStyle(color: AppColors.muted),
                       ),
                     ),
                   )
@@ -136,14 +148,14 @@ class _AchievementTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(def.name,
+                  Text(def.localizedName(context),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color:
                             unlocked ? AppColors.onSurface : AppColors.muted,
                       )),
-                  Text(def.description,
+                  Text(def.localizedDescription(context),
                       style: const TextStyle(
                           color: AppColors.muted, fontSize: 12)),
                   const SizedBox(height: 6),

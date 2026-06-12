@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/routes.dart';
+import '../../core/i18n/app_locale.dart';
 import '../../data/repositories/level_repository.dart';
 import '../../providers/app_providers.dart';
 import 'booster_actions.dart';
@@ -74,7 +75,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final data = await _repo.tryLoad(widget.levelId);
     if (!mounted) return;
     if (data == null) {
-      setState(() => _loadError = 'Brak danych poziomu ${widget.levelId}');
+      setState(() => _loadError =
+          '${context.tr(en: 'Missing level data', pl: 'Brak danych poziomu')} ${widget.levelId}');
       return;
     }
     setState(() => _level = data);
@@ -262,15 +264,18 @@ class _GameScreenState extends ConsumerState<GameScreen>
                           ),
                         ),
                       ),
-                      errorBuilder: (_, _) => const ColoredBox(
-                        color: Color(0xFF2A1E70),
+                      errorBuilder: (errCtx, _) => ColoredBox(
+                        color: const Color(0xFF2A1E70),
                         child: Center(
                           child: Padding(
-                            padding: EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(24),
                             child: Text(
-                              'Nie udało się załadować poziomu. Spróbuj ponownie.',
+                              errCtx.tr(
+                                en: 'Failed to load the level. Please try again.',
+                                pl: 'Nie udało się załadować poziomu. Spróbuj ponownie.',
+                              ),
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                               ),

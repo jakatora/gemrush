@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/i18n/app_locale.dart';
 import '../../../providers/app_providers.dart';
 
 class BoosterBar extends ConsumerWidget {
@@ -30,17 +31,24 @@ class BoosterBar extends ConsumerWidget {
         children: [
           _BoosterButton(
             icon: Icons.lightbulb,
-            label: hintReady ? 'Hint\nreklama' : 'Hint\n50 ☆',
+            label: hintReady
+                ? context.tr(en: 'Hint\nad', pl: 'Hint\nreklama')
+                : 'Hint\n50 ☆',
             onTap: busy ? null : onHintTap,
           ),
           _BoosterButton(
             icon: Icons.shuffle,
-            label: 'Tasuj\n75 ☆',
+            label: context.tr(en: 'Shuffle\n75 ☆', pl: 'Tasuj\n75 ☆'),
             onTap: busy ? null : onShuffleTap,
           ),
           _BoosterButton(
             icon: Icons.add_circle,
-            label: extraMovesReady ? '+5 ruch\nreklama' : '+5 ruch\n200 ☆',
+            label: extraMovesReady
+                ? context.tr(
+                    en: '+5 moves\nad',
+                    pl: '+5 ruch\nreklama',
+                  )
+                : context.tr(en: '+5 moves\n200 ☆', pl: '+5 ruch\n200 ☆'),
             onTap: busy ? null : onExtraMovesTap,
           ),
         ],

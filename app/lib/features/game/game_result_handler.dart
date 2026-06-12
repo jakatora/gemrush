@@ -1,7 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/i18n/app_locale.dart';
 import '../../providers/app_providers.dart';
 import 'flame_components/gem_rush_game.dart';
 import 'models/booster.dart';
@@ -56,7 +59,6 @@ class GameResultHandler {
       placement: 'post_level_win',
     );
 
-    // ignore: use_build_context_synchronously
     if (isMountedCheck()) context.pop();
   }
 
@@ -82,7 +84,6 @@ class GameResultHandler {
 
     if (!isMountedCheck()) return;
     await showDialog<void>(
-      // ignore: use_build_context_synchronously
       context: context,
       barrierDismissible: false,
       builder: (ctx) => LoseDialog(
@@ -104,7 +105,6 @@ class GameResultHandler {
       placement: 'post_level_lose',
     );
 
-    // ignore: use_build_context_synchronously
     if (isMountedCheck()) context.pop();
   }
 
@@ -201,11 +201,13 @@ class GameResultHandler {
         ref.read(coinsProvider.notifier).state = profileRepo.current.coins;
         for (final def in res.justUnlocked) {
           if (!isMountedCheck()) break;
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
+          final ctx = context;
+          ScaffoldMessenger.of(ctx).showSnackBar(
             SnackBar(
-              content:
-                  Text('🏆 ${def.name}! +${def.coinReward} monet'),
+              content: Text(
+                '🏆 ${def.localizedName(ctx)}! +${def.coinReward} '
+                '${ctx.tr(en: 'coins', pl: 'monet')}',
+              ),
               duration: const Duration(seconds: 3),
             ),
           );

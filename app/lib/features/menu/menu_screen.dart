@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/routes.dart';
+import '../../core/i18n/app_locale.dart';
 import '../../providers/app_providers.dart';
 import 'widgets/animated_counter.dart';
 import 'widgets/daily_challenge_card.dart';
@@ -43,7 +44,7 @@ class MenuScreen extends ConsumerWidget {
                 const DailyChallengeCard(),
                 const Spacer(),
                 Text(
-                  'GemRush',
+                  'Gem Rush Saga',
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         color: AppColors.onSurface,
                         fontWeight: FontWeight.w700,
@@ -60,7 +61,7 @@ class MenuScreen extends ConsumerWidget {
                 ElevatedButton.icon(
                   onPressed: () => context.push(Routes.map),
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text('Graj'),
+                  label: Text(context.tr(en: 'Play', pl: 'Graj')),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(220, 64),
                   ),
@@ -71,27 +72,28 @@ class MenuScreen extends ConsumerWidget {
                   children: [
                     _IconButton(
                       icon: Icons.shopping_bag,
-                      label: 'Sklep',
+                      label: context.tr(en: 'Shop', pl: 'Sklep'),
                       onTap: () => context.push(Routes.shop),
                     ),
                     _IconButton(
                       icon: Icons.emoji_events,
-                      label: 'Osiągnięcia',
+                      label: context.tr(
+                          en: 'Achievements', pl: 'Osiągnięcia'),
                       onTap: () => context.push(Routes.achievements),
                     ),
                     _IconButton(
                       icon: Icons.flag,
-                      label: 'Wyzwania',
+                      label: context.tr(en: 'Quests', pl: 'Wyzwania'),
                       onTap: () => context.push(Routes.quests),
                     ),
                     _IconButton(
                       icon: Icons.bar_chart,
-                      label: 'Statystyki',
+                      label: context.tr(en: 'Stats', pl: 'Statystyki'),
                       onTap: () => context.push(Routes.stats),
                     ),
                     _IconButton(
                       icon: Icons.settings,
-                      label: 'Ustawienia',
+                      label: context.tr(en: 'Settings', pl: 'Ustawienia'),
                       onTap: () => context.push(Routes.settings),
                     ),
                   ],

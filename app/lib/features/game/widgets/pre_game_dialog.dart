@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/i18n/app_locale.dart';
 import '../../../providers/app_providers.dart';
 import '../models/booster.dart';
 import '../models/level_data.dart';
@@ -42,17 +43,23 @@ class _PreGameDialogState extends ConsumerState<PreGameDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Poziom ${widget.level.id}',
+            Text(
+                '${context.tr(en: 'Level', pl: 'Poziom')} ${widget.level.id}',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: AppColors.onSurface,
                 )),
             const SizedBox(height: 4),
-            Text('${widget.level.moves} ruchów',
+            Text(
+                '${widget.level.moves} ${context.tr(en: 'moves', pl: 'ruchów')}',
                 style: const TextStyle(color: AppColors.muted)),
             const SizedBox(height: 18),
-            Text('Boostery (opcjonalne):',
+            Text(
+                context.tr(
+                  en: 'Boosters (optional):',
+                  pl: 'Boostery (opcjonalne):',
+                ),
                 style: const TextStyle(color: AppColors.muted)),
             const SizedBox(height: 8),
             Wrap(
@@ -81,7 +88,7 @@ class _PreGameDialogState extends ConsumerState<PreGameDialog> {
                   const Icon(Icons.monetization_on,
                       color: AppColors.accent, size: 18),
                   const SizedBox(width: 4),
-                  Text('Koszt: $cost',
+                  Text('${context.tr(en: 'Cost', pl: 'Koszt')}: $cost',
                       style: const TextStyle(
                         color: AppColors.accent,
                         fontWeight: FontWeight.w600,
@@ -96,13 +103,13 @@ class _PreGameDialogState extends ConsumerState<PreGameDialog> {
                     }
                   : null,
               icon: const Icon(Icons.play_arrow),
-              label: const Text('Graj'),
+              label: Text(context.tr(en: 'Play', pl: 'Graj')),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Anuluj',
-                  style: TextStyle(color: AppColors.muted)),
+              child: Text(context.tr(en: 'Cancel', pl: 'Anuluj'),
+                  style: const TextStyle(color: AppColors.muted)),
             ),
           ],
         ),
@@ -133,11 +140,12 @@ class _BoosterChip extends StatelessWidget {
       BoosterType.extraMoves => Icons.add_circle,
       BoosterType.colorBombStart => Icons.blur_circular,
     };
+    final pl = LocaleScope.of(context) == AppLocale.pl;
     final label = switch (booster) {
-      BoosterType.hammer => 'Młotek',
-      BoosterType.shuffle => 'Tasowanie',
-      BoosterType.hint => 'Podpowiedź',
-      BoosterType.extraMoves => '+5 ruchów',
+      BoosterType.hammer => pl ? 'Młotek' : 'Hammer',
+      BoosterType.shuffle => pl ? 'Tasowanie' : 'Shuffle',
+      BoosterType.hint => pl ? 'Podpowiedź' : 'Hint',
+      BoosterType.extraMoves => pl ? '+5 ruchów' : '+5 moves',
       BoosterType.colorBombStart => 'Color bomb',
     };
     return Opacity(

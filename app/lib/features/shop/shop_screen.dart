@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/i18n/app_locale.dart';
 import '../../core/services/iap_service.dart';
 import '../../providers/app_providers.dart';
 
@@ -17,61 +18,83 @@ class ShopScreen extends ConsumerWidget {
     final products = iap.products;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sklep')),
+      appBar: AppBar(title: Text(context.tr(en: 'Shop', pl: 'Sklep'))),
       body: products.isEmpty
           ? const _StoreUnavailable()
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                const _SectionHeader('Wyłącz reklamy'),
+                _SectionHeader(
+                    context.tr(en: 'Remove ads', pl: 'Wyłącz reklamy')),
                 _IapCard(
                   product: products[IapProducts.removeAds],
                   ref: ref,
                   badge: _Badge.popular,
-                  description: 'Bez przerw między poziomami. Reward ads zostają.',
+                  description: context.tr(
+                    en: 'No interstitials between levels. Reward ads stay.',
+                    pl: 'Bez przerw między poziomami. Reward ads zostają.',
+                  ),
                 ),
                 const SizedBox(height: 16),
-                const _SectionHeader('Monety'),
+                _SectionHeader(context.tr(en: 'Coins', pl: 'Monety')),
                 _IapCard(
                   product: products[IapProducts.coins100],
                   ref: ref,
-                  description: '+100 monet',
+                  description: context.tr(en: '+100 coins', pl: '+100 monet'),
                 ),
                 _IapCard(
                   product: products[IapProducts.coins500],
                   ref: ref,
                   badge: _Badge.popular,
-                  description: '+600 monet (20% bonus)',
+                  description: context.tr(
+                    en: '+600 coins (20% bonus)',
+                    pl: '+600 monet (20% bonus)',
+                  ),
                 ),
                 _IapCard(
                   product: products[IapProducts.coins1200],
                   ref: ref,
                   badge: _Badge.bestValue,
-                  description: '+1600 monet (33% bonus)',
+                  description: context.tr(
+                    en: '+1600 coins (33% bonus)',
+                    pl: '+1600 monet (33% bonus)',
+                  ),
                 ),
                 _IapCard(
                   product: products[IapProducts.coins3000],
                   ref: ref,
-                  description: '+4500 monet (50% bonus)',
+                  description: context.tr(
+                    en: '+4500 coins (50% bonus)',
+                    pl: '+4500 monet (50% bonus)',
+                  ),
                 ),
                 const SizedBox(height: 16),
-                const _SectionHeader('Pakiety'),
+                _SectionHeader(context.tr(en: 'Bundles', pl: 'Pakiety')),
                 _IapCard(
                   product: products[IapProducts.starterPack],
                   ref: ref,
                   badge: _Badge.limited,
-                  description: '200 monet + 10 żyć + 3 boostery',
+                  description: context.tr(
+                    en: '200 coins + 10 lives + 3 boosters',
+                    pl: '200 monet + 10 żyć + 3 boostery',
+                  ),
                 ),
                 _IapCard(
                   product: products[IapProducts.weekendPack],
                   ref: ref,
                   badge: _Badge.limited,
-                  description: '500 monet + unlim. życia 24h',
+                  description: context.tr(
+                    en: '500 coins + unlimited lives 24h',
+                    pl: '500 monet + unlim. życia 24h',
+                  ),
                 ),
                 _IapCard(
                   product: products[IapProducts.unlimitedLives24h],
                   ref: ref,
-                  description: '24h bez limitu żyć',
+                  description: context.tr(
+                    en: '24h of unlimited lives',
+                    pl: '24h bez limitu żyć',
+                  ),
                 ),
                 const SizedBox(height: 24),
               ],
@@ -117,12 +140,18 @@ class _IapCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (product == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 6),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: ListTile(
-          leading: Icon(Icons.help_outline, color: AppColors.muted),
-          title: Text('Produkt niedostępny'),
-          subtitle: Text('Skonfiguruj IAP w Google Play / App Store Connect.'),
+          leading: const Icon(Icons.help_outline, color: AppColors.muted),
+          title: Text(context.tr(
+            en: 'Product unavailable',
+            pl: 'Produkt niedostępny',
+          )),
+          subtitle: Text(context.tr(
+            en: 'Configure IAP in Google Play / App Store Connect.',
+            pl: 'Skonfiguruj IAP w Google Play / App Store Connect.',
+          )),
         ),
       );
     }
@@ -176,16 +205,18 @@ class _IapCard extends StatelessWidget {
             ),
           ),
         ),
-        if (badge != _Badge.none) _badgeWidget(),
+        if (badge != _Badge.none) _badgeWidget(context),
       ],
     );
   }
 
-  Widget _badgeWidget() {
+  Widget _badgeWidget(BuildContext context) {
+    final pl = LocaleScope.of(context) == AppLocale.pl;
     final (label, color) = switch (badge) {
-      _Badge.popular => ('POPULARNY', AppColors.accent),
-      _Badge.bestValue => ('NAJLEPSZA WARTOŚĆ', AppColors.success),
-      _Badge.limited => ('LIMITOWANY', AppColors.danger),
+      _Badge.popular => (pl ? 'POPULARNY' : 'POPULAR', AppColors.accent),
+      _Badge.bestValue =>
+        (pl ? 'NAJLEPSZA WARTOŚĆ' : 'BEST VALUE', AppColors.success),
+      _Badge.limited => (pl ? 'LIMITOWANY' : 'LIMITED', AppColors.danger),
       _Badge.none => ('', AppColors.primary),
     };
     return Positioned(
@@ -218,23 +249,27 @@ class _StoreUnavailable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cloud_off, size: 64, color: AppColors.muted),
-            SizedBox(height: 16),
+            const Icon(Icons.cloud_off, size: 64, color: AppColors.muted),
+            const SizedBox(height: 16),
             Text(
-              'Sklep niedostępny',
-              style: TextStyle(fontSize: 20, color: AppColors.onSurface),
+              context.tr(en: 'Shop unavailable', pl: 'Sklep niedostępny'),
+              style: const TextStyle(
+                  fontSize: 20, color: AppColors.onSurface),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-              'Sprawdź połączenie z internetem lub upewnij się, że produkty IAP zostały skonfigurowane w Google Play / App Store Connect.',
+              context.tr(
+                en: 'Check your internet connection or make sure IAP products are configured in Google Play / App Store Connect.',
+                pl: 'Sprawdź połączenie z internetem lub upewnij się, że produkty IAP zostały skonfigurowane w Google Play / App Store Connect.',
+              ),
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.muted),
+              style: const TextStyle(color: AppColors.muted),
             ),
           ],
         ),
