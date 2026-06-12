@@ -37,11 +37,13 @@ class LocaleScope extends InheritedNotifier<LocaleNotifier> {
     required super.child,
   });
 
+  /// Defaultuje do [AppLocale.en] gdy nie ma scope w drzewie — pozwala
+  /// pojedyncze widgety renderować w testach widget bez owijania ich
+  /// w cały app shell.
   static AppLocale of(BuildContext context) {
     final scope =
         context.dependOnInheritedWidgetOfExactType<LocaleScope>();
-    assert(scope != null, 'LocaleScope not found in widget tree');
-    return scope!.notifier!.locale;
+    return scope?.notifier?.locale ?? AppLocale.en;
   }
 
   static LocaleNotifier notifierOf(BuildContext context) {

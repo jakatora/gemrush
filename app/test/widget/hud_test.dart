@@ -24,7 +24,7 @@ void main() {
         ),
       ),
     );
-    expect(find.text('Poziom 7'), findsOneWidget);
+    expect(find.text('Level 7'), findsOneWidget);
     expect(find.text('1.2k'), findsOneWidget); // score formatowany
     expect(find.text('12'), findsOneWidget); // moves
     expect(find.text('0/1000'), findsOneWidget);
