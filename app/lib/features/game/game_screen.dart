@@ -229,18 +229,49 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
     final theme = WorldTheme.forLevel(widget.levelId);
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              theme.gradient.first,
-              const Color(0xFF0E0B2C),
-            ],
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Warstwa 1: tlo swiata (Canva-generated 1080x1920 PNG). Fallback
+          // gradient gdy asset nie zaladowal sie (np. corrupted PNG).
+          Image.asset(
+            WorldTheme.backgroundPathForLevel(widget.levelId),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    theme.gradient.first,
+                    const Color(0xFF0E0B2C),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
+          // Warstwa 2: dim overlay - top+bottom vignette dla czytelnosci HUD
+          // i booster bar, srodek lekko zaciemniony zeby plansza byla wyrazna.
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.0, 0.18, 0.5, 0.82, 1.0],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.55),
+                    Colors.black.withValues(alpha: 0.30),
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.30),
+                    Colors.black.withValues(alpha: 0.60),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Warstwa 3: UI gry.
+          SafeArea(
         child: Stack(
           children: [
             Positioned.fill(
@@ -302,7 +333,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
               ),
           ],
         ),
-      ),
+          ),
+        ],
       ),
     );
   }

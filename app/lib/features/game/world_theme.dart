@@ -154,4 +154,14 @@ class WorldTheme {
 
   static WorldTheme forWorld(int worldId) =>
       _themes[worldId] ?? _themes[1]!;
+
+  /// Asset path do tla swiata (1080x1920 PNG wygenerowane przez Canva).
+  /// Zwraca format `assets/images/backgrounds/world_NN.png` z zero-paddingiem.
+  static String backgroundPathForWorld(int worldId) {
+    final clamped = worldId.clamp(1, _themes.length);
+    return 'assets/images/backgrounds/world_${clamped.toString().padLeft(2, '0')}.png';
+  }
+
+  static String backgroundPathForLevel(int levelId) =>
+      backgroundPathForWorld(worldForLevel(levelId));
 }

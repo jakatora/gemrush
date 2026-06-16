@@ -179,7 +179,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.info_outline, color: AppColors.accent),
             title: Text(context.tr(en: 'Version', pl: 'Wersja')),
-            subtitle: const Text('1.0.1 (6)'),
+            subtitle: const Text('1.0.1 (7)'),
           ),
           ListTile(
             leading: const Icon(Icons.email, color: AppColors.accent),

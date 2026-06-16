@@ -163,20 +163,49 @@ class _WorldSection extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: theme.gradient.map((c) => c.withValues(alpha: 0.3)).toList(),
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      child: Stack(
+        children: [
+          // Tlo swiata (Canva PNG) z borderRadius przez ClipRRect.
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                WorldTheme.backgroundPathForWorld(worldId),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: theme.gradient
+                          .map((c) => c.withValues(alpha: 0.5))
+                          .toList(),
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.gradient.first.withValues(alpha: 0.4)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          // Dim overlay + border + content.
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withValues(alpha: 0.55),
+                  Colors.black.withValues(alpha: 0.30),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: theme.gradient.first.withValues(alpha: 0.6),
+                  width: 1.5),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             Row(
               children: [
                 Icon(theme.icon, color: theme.gradient.last, size: 28),
@@ -205,8 +234,10 @@ class _WorldSection extends StatelessWidget {
                 );
               }),
             ),
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
